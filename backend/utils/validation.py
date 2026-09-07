@@ -2,7 +2,7 @@
 import re
 
 
-def validEmail(email: str) -> list[str]:
+def valid_email(email: str) -> list[str]:
     """Retorna lista de mensagens de error"""
     errors = []
     if not re.fullmatch(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
@@ -10,7 +10,7 @@ def validEmail(email: str) -> list[str]:
     return errors
 
 
-def validPassword(password: str) -> list[str]:
+def valid_eassword(password: str) -> list[str]:
     """Retorna lista de mensagens de error"""
     errors = []
     if not len(password) >= 8:
@@ -25,7 +25,7 @@ def validPassword(password: str) -> list[str]:
     return errors
 
 
-def validName(name: str) -> list[str]:
+def valid_name(name: str) -> list[str]:
     """Retorna lista de mensagens de error"""
     errors = []
     if not any(c.isdigit() for c in name) or not any(not c.isalnum() for c in name):
