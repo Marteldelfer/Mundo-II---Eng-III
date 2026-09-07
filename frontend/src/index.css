@@ -1,22 +1,26 @@
 :root {
   --text: #6b6375;
   --text-h: #08060d;
-  --bg: #fff;
+  --bg: #f5f5f5;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  --accent: #fff;
+  --accent-bg: #2D3648;
+  --accent-border: #2C2C2C;
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Atkinson Hyperlegible', sans-serif;
+  --heading: 'Atkinson Hyperlegible', sans-serif;
+  --mono: 'Atkinson Hyperlegible', sans-serif;
+
+  /* --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --mono: ui-monospace, Consolas, monospace; */
 
   font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
+  letter-spacing: 0.32px;
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
@@ -30,7 +34,7 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
     --text-h: #f3f4f6;
@@ -48,7 +52,7 @@
   #social .button-icon {
     filter: invert(1) brightness(2);
   }
-}
+} */
 
 body {
   margin: 0;
@@ -75,7 +79,8 @@ h2 {
 
 h1 {
   font-size: 56px;
-  letter-spacing: -1.68px;
+  letter-spacing: 0.32px;
+  line-height: 118%;
   margin: 32px 0;
   @media (max-width: 1024px) {
     font-size: 36px;
@@ -85,7 +90,7 @@ h1 {
 h2 {
   font-size: 24px;
   line-height: 118%;
-  letter-spacing: -0.24px;
+  letter-spacing: 0.32px;
   margin: 0 0 8px;
   @media (max-width: 1024px) {
     font-size: 20px;
