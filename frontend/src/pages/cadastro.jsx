@@ -4,28 +4,36 @@ export default function Cadastro() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState(''); // 1. Novo estado
   const [mensagem, setMensagem] = useState('');
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Evita que a página recarregue
+    e.preventDefault(); 
     
+    if (senha !== confirmarSenha) {
+      setMensagem('As senhas não coincidem!');
+      return;
+    }
+
     try {
       const response = await fetch('http://127.0.0.1:8000/usuarios', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ nome, email, senha }),
+        body: JSON.stringify({ nome, email, senha }), 
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // Mostra o erro exato que o seu backend retornou
         setMensagem(data.detail[0] || 'Erro ao cadastrar');
       } else {
         setMensagem('Cadastro realizado com sucesso!');
-        // Aqui vocês poderão redirecionar para o Login depois
+        setNome('');
+        setEmail('');
+        setSenha('');
+        setConfirmarSenha('');
       }
     } catch (error) {
       setMensagem('Erro de conexão com o servidor.');
@@ -63,10 +71,18 @@ export default function Cadastro() {
             required 
           />
         </div>
+        <div>
+          <label>Confirmar Senha:</label>
+          <input 
+            type="password" 
+            value={confirmarSenha} 
+            onChange={(e) => setConfirmarSenha(e.target.value)} 
+            required 
+          />
+        </div>
         <button type="submit">Cadastrar</button>
       </form>
       
-      {/* Exibe mensagens de sucesso ou erro na tela */}
       {mensagem && <p>{mensagem}</p>}
     </div>
   );
