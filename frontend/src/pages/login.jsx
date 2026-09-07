@@ -42,11 +42,23 @@ export default function Login() {
       <form style={{width: '75%'}} onSubmit={handleSubmit}>
       <label>
         <h4 style={{marginBottom: '8px'}}>E-mail:</h4>
-        <input type="email" name="email" />
+        <input 
+          type="email" 
+          name="email" 
+          value={email} 
+          onChange={(e) => setEmail(e.target.value)} 
+          required 
+        />
       </label>
       <label>
         <h4 style={{marginBottom: '8px'}}>Senha:</h4>
-        <input type="password" name="password" />
+        <input 
+          type="password" 
+          name="password" 
+          value={senha} 
+          onChange={(e) => setSenha(e.target.value)} 
+          required 
+        />
       </label>
       <h4 style={{marginBottom: '8px'}}>Não possui uma conta? <Link to="/cadastro">Criar conta</Link></h4>
       <input type="submit" value="Entrar" className="signin-button" />

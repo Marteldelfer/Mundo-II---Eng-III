@@ -8,7 +8,7 @@ export default function Cadastro() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState(''); // 1. Novo estado
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [mensagem, setMensagem] = useState('');
 
   const handleSubmit = async (e) => {
@@ -52,19 +52,43 @@ export default function Cadastro() {
       
       <label>
         <h4 style={{marginBottom: '8px'}}>Nome:</h4>
-        <input type="text" name="name" />
+        <input 
+          type="text" 
+          name="name" 
+          value={nome} 
+          onChange={(e) => setNome(e.target.value)} 
+          required 
+        />
       </label>
       <label>
         <h4 style={{marginBottom: '8px'}}>E-mail:</h4>
-        <input type="email" name="email" />
+        <input 
+          type="email" 
+          name="email" 
+          value={email} 
+          onChange={(e) => setEmail(e.target.value)} 
+          required 
+        />
       </label>
       <label>
         <h4 style={{marginBottom: '8px'}}>Senha:</h4>
-        <input type="password" name="password" />
+        <input 
+          type="password" 
+          name="password" 
+          value={senha} 
+          onChange={(e) => setSenha(e.target.value)} 
+          required 
+        />
       </label>
       <label>
         <h4 style={{marginBottom: '8px'}}>Confirmar Senha:</h4>
-        <input type="password" name="confirmPassword" />
+        <input 
+          type="password" 
+          name="confirmPassword" 
+          value={confirmarSenha} 
+          onChange={(e) => setConfirmarSenha(e.target.value)} 
+          required 
+        />
       </label>
       <h4 style={{marginBottom: '8px'}}>Ja possui uma conta? <Link to="/login">Entrar</Link></h4>
       <input type="submit" value="Criar conta" className="signin-button" />
