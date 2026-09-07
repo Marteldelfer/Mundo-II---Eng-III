@@ -5,6 +5,7 @@ from src.database import engine, Base, SessionLocal
 from src.modelos.user import User
 from src.schemas import UserCreate, UserResponse
 from src.utils.validation import validar_nome, validar_email, validar_senha
+from src.schemas import UserCreate, UserResponse, UserLogin
 
 Base.metadata.create_all(bind=engine)
 
@@ -56,3 +57,31 @@ def cadastrar_usuario(usuario: UserCreate, db: Session = Depends(get_db)):
     db.refresh(novo_usuario)
 
     return novo_usuario
+
+@app.post("/login", status_code=status.HTTP_200_OK)
+def login(dados_login: UserLogin, db: Session = Depends(get_db)):
+    usuario = db.query(User).filter(User.email == dados_login.email).first()
+
+    # se o usuário não existir, retorna erro de credenciais inválidas
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="E-mail ou senha incorretos."
+        )
+
+    senha_hash_enviada = gerar_hash_senha(dados_login.senha)
+
+    if usuario.senha_hash != senha_hash_enviada:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="E-mail ou senha incorretos."
+        )
+
+    return {
+        "mensagem": "Login realizado com sucesso",
+        "usuario": {
+            "id": usuario.id,
+            "nome": usuario.nome,
+            "email": usuario.email
+        }
+    }
