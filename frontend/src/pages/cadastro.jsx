@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import logo from '../assets/logo.png'
+import Login from './login'
+import '../App.css'
 
 export default function Cadastro() {
   const [nome, setNome] = useState('');
@@ -42,46 +46,31 @@ export default function Cadastro() {
 
   return (
     <div>
-      <h2>Criar Conta</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Nome:</label>
-          <input 
-            type="text" 
-            value={nome} 
-            onChange={(e) => setNome(e.target.value)} 
-            required 
-          />
-        </div>
-        <div>
-          <label>E-mail:</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-          />
-        </div>
-        <div>
-          <label>Senha:</label>
-          <input 
-            type="password" 
-            value={senha} 
-            onChange={(e) => setSenha(e.target.value)} 
-            required 
-          />
-        </div>
-        <div>
-          <label>Confirmar Senha:</label>
-          <input 
-            type="password" 
-            value={confirmarSenha} 
-            onChange={(e) => setConfirmarSenha(e.target.value)} 
-            required 
-          />
-        </div>
-        <button type="submit">Cadastrar</button>
+    <section id="center">
+              
+      <form style={{width: '75%'}} onSubmit={handleSubmit}>
+      
+      <label>
+        <h4 style={{marginBottom: '8px'}}>Nome:</h4>
+        <input type="text" name="name" />
+      </label>
+      <label>
+        <h4 style={{marginBottom: '8px'}}>E-mail:</h4>
+        <input type="email" name="email" />
+      </label>
+      <label>
+        <h4 style={{marginBottom: '8px'}}>Senha:</h4>
+        <input type="password" name="password" />
+      </label>
+      <label>
+        <h4 style={{marginBottom: '8px'}}>Confirmar Senha:</h4>
+        <input type="password" name="confirmPassword" />
+      </label>
+      <h4 style={{marginBottom: '8px'}}>Ja possui uma conta? <Link to="/login">Entrar</Link></h4>
+      <input type="submit" value="Criar conta" className="signin-button" />
+      
       </form>
+    </section>
       
       {mensagem && <p>{mensagem}</p>}
     </div>

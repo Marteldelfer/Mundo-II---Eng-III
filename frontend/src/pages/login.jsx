@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import logo from '../assets/logo.png'
+import Cadastro from './cadastro'
+import '../App.css'
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -31,28 +35,24 @@ export default function Login() {
 
   return (
     <div>
-      <h2>Entrar</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>E-mail:</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-          />
-        </div>
-        <div>
-          <label>Senha:</label>
-          <input 
-            type="password" 
-            value={senha} 
-            onChange={(e) => setSenha(e.target.value)} 
-            required 
-          />
-        </div>
-        <button type="submit">Entrar</button>
+    <section id="center">
+        <div className="logo">
+            <img src={logo} className="base" width="200" height="200" alt="" />
+          </div>
+      <form style={{width: '75%'}} onSubmit={handleSubmit}>
+      <label>
+        <h4 style={{marginBottom: '8px'}}>E-mail:</h4>
+        <input type="email" name="email" />
+      </label>
+      <label>
+        <h4 style={{marginBottom: '8px'}}>Senha:</h4>
+        <input type="password" name="password" />
+      </label>
+      <h4 style={{marginBottom: '8px'}}>Não possui uma conta? <Link to="/cadastro">Criar conta</Link></h4>
+      <input type="submit" value="Entrar" className="signin-button" />
+      
       </form>
+    </section>
       
       {mensagem && <p>{mensagem}</p>}
     </div>
