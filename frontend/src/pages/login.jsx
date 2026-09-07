@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import Cadastro from './cadastro'
 import '../App.css'
@@ -8,6 +8,8 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [mensagem, setMensagem] = useState('');
+  
+  const navigate = useNavigate(); 
 
   const handleSubmit = async (e) => {
     e.preventDefault(); 
@@ -26,7 +28,7 @@ export default function Login() {
       if (!response.ok) {
         setMensagem(data.detail || 'Erro ao realizar login');
       } else {
-        setMensagem('Login realizado com sucesso!');
+        navigate('/landing');
       }
     } catch (error) {
       setMensagem('Erro de conexão com o servidor.');
