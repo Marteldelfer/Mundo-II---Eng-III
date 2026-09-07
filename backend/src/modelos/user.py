@@ -1,8 +1,10 @@
-from dataclasses import dataclass
+from sqlalchemy import Column, Integer, String
+from src.database import Base
 
-@dataclass
-class User:
-    id: int
-    nome: str
-    email: str
-    senha: str
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    senha_hash = Column(String, nullable=False)
