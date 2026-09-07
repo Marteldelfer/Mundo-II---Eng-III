@@ -4,8 +4,10 @@ import re
 
 def validEmail(email: str) -> list[str]:
     """Retorna lista de mensagens de error"""
-    if not re.match(r'/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', email):
-        return ['Email inválido']
+    errors = []
+    if not re.fullmatch(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+        errors.append('Email inválido')
+    return errors
 
 
 def validPassword(password: str) -> list[str]:
