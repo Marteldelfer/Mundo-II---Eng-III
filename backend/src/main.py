@@ -1,5 +1,6 @@
 import hashlib
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from src.database import engine, Base, SessionLocal
 from src.modelos.user import User
@@ -11,6 +12,14 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Sistema de Cadastro de Usuários")
 
+# Libera o acesso para requisições vindas do frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_db():
     db = SessionLocal()
