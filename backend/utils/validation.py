@@ -10,7 +10,7 @@ def valid_email(email: str) -> list[str]:
     return errors
 
 
-def valid_eassword(password: str) -> list[str]:
+def valid_password(password: str) -> list[str]:
     """Retorna lista de mensagens de error"""
     errors = []
     if not len(password) >= 8:
