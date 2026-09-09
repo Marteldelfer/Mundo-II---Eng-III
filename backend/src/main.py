@@ -75,7 +75,7 @@ def login(dados_login: UserLogin, db: Session = Depends(get_db)):
     if not usuario:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="E-mail ou senha incorretos."
+            detail="Email não encontrado"
         )
 
     senha_hash_enviada = gerar_hash_senha(dados_login.senha)

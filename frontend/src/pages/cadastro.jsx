@@ -11,6 +11,26 @@ export default function Cadastro() {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [mensagem, setMensagem] = useState('');
 
+  let erroValidacao = "";
+  let botaoDesabilitado = false;
+
+  if (senha.length > 0) {
+    if (senha.length < 8) {
+      erroValidacao = "A senha deve ter pelo menos 8 caracteres";
+      botaoDesabilitado = true;
+    } else if (!/[A-Z]/.test(senha)) {
+      erroValidacao = "A senha deve ter pelo menos uma letra maiúscula";
+      botaoDesabilitado = true;
+    } else if (!/[^a-zA-Z0-9]/.test(senha)) { 
+      erroValidacao = "A senha deve ter pelo menos um caractere especial";
+      botaoDesabilitado = true;
+    }
+  }
+
+  if (!nome || !email || !senha || !confirmarSenha) {
+    botaoDesabilitado = true;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault(); 
     
@@ -80,6 +100,13 @@ export default function Cadastro() {
           required 
         />
       </label>
+
+      {erroValidacao && (
+        <p style={{ color: 'red', marginTop: '-5px', marginBottom: '10px', fontWeight: 'bold' }}>
+          {erroValidacao}
+        </p>
+      )}
+
       <label>
         <h4 style={{marginBottom: '8px'}}>Confirmar Senha:</h4>
         <input 
@@ -91,12 +118,19 @@ export default function Cadastro() {
         />
       </label>
       <h4 style={{marginBottom: '8px'}}>Ja possui uma conta? <Link to="/login">Entrar</Link></h4>
-      <input type="submit" value="Criar conta" className="signin-button" />
+      
+      <input 
+        type="submit" 
+        value="Criar conta" 
+        className="signin-button" 
+        disabled={botaoDesabilitado}
+        style={{ opacity: botaoDesabilitado ? 0.6 : 1, cursor: botaoDesabilitado ? 'not-allowed' : 'pointer' }}
+      />
       
       </form>
     </section>
       
-      {mensagem && <p>{mensagem}</p>}
+      {mensagem && <p style={{fontWeight: 'bold'}}>{mensagem}</p>}
     </div>
   );
 }
