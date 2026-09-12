@@ -1,15 +1,11 @@
-import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import logo from './assets/logo.png'
 import Cadastro from './pages/cadastro'
 import Login from './pages/login'
 import Landing from './pages/landing'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <BrowserRouter>
