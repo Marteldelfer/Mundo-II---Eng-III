@@ -63,7 +63,7 @@ export default function Login() {
         />
       </label>
       <h4 style={{marginBottom: '8px'}}>Não possui uma conta? <Link to="/cadastro">Criar conta</Link></h4>
-      <input type="submit" value="Entrar" className="signin-button" />
+      <input type="submit" value="Entrar" className="dark-gray-button" />
       
       </form>
     </section>

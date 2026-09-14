@@ -14,7 +14,7 @@ export default function Landing() {
                   <button
                   style={{width: '300px', height: '75px'}}
                   type="button"
-                  className="login-button"
+                  className="purple-button"
                 >
                   Cadastrar turma
                 </button>

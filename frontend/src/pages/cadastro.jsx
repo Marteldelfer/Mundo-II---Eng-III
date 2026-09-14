@@ -122,7 +122,7 @@ export default function Cadastro() {
       <input 
         type="submit" 
         value="Criar conta" 
-        className="signin-button" 
+        className="dark-gray-button" 
         disabled={botaoDesabilitado}
         style={{ opacity: botaoDesabilitado ? 0.6 : 1, cursor: botaoDesabilitado ? 'not-allowed' : 'pointer' }}
       />

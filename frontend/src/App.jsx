@@ -25,7 +25,7 @@ function App() {
                 <button
                   style={{width: '300px', height: '75px'}}
                   type="button"
-                  className="signin-button"
+                  className="dark-gray-button"
                   >
                   Criar conta
                 </button>
@@ -34,7 +34,7 @@ function App() {
                 <button
                   style={{width: '300px', height: '75px'}}
                   type="button"
-                  className="login-button"
+                  className="gray-button"
                 >
                   Entrar
                 </button>
