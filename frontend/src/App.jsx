@@ -3,6 +3,7 @@ import logo from './assets/logo.png'
 import Cadastro from './pages/cadastro'
 import Login from './pages/login'
 import Landing from './pages/landing'
+import Turma from './pages/turma'
 import './App.css'
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/login" element={<Login />} />
         <Route path="/landing" element={<Landing />} />
+        <Route path="/turma" element={<Turma />} />
       </Routes>
     </BrowserRouter>
   )

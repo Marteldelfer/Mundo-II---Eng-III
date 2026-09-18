@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.utils.database import engine, Base
 from src.modelos.user import *
+from src.modelos.turma import *
 from src.controllers.user_controller import router as user_router
 from src.controllers.turma_controller import router as turma_router
 from src.controllers.aluno_controller import router as aluno_router
