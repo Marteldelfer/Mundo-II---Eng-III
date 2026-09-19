@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from src.modelos.turma import Turma
 from src.utils.database import get_db
+from src.services.openai_service import analisar_plano_ensino
 
 class TurmaCreate(BaseModel):
     nome: str
@@ -52,6 +53,41 @@ def create_turma(turma: TurmaCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ocorreu um erro interno na criação da turma."
         )
+
+EXTENSOES_PLANOS_PERMITIDAS = {".pdf", ".docx", ".pptx"}
+
+
+@router.post("/analisar-plano")
+async def analisar_plano(
+    plano_ensino: UploadFile = File(...),
+):
+    nome_arquivo = plano_ensino.filename or ""
+    extensao = "." + nome_arquivo.rsplit(".", 1)[-1].lower() if "." in nome_arquivo else ""
+
+    if extensao not in EXTENSOES_PLANOS_PERMITIDAS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Formato de arquivo não suportado. Envie um arquivo PDF, DOCX ou PPTX."
+        )
+
+    conteudo = await plano_ensino.read()
+    if not conteudo:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="O arquivo do plano de ensino está vazio."
+        )
+
+    try:
+        return analisar_plano_ensino(
+            conteudo=conteudo,
+            nome_arquivo=nome_arquivo,
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ocorreu um erro interno. Tente novamente mais tarde"
+        )
+
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def create_turma_upload(

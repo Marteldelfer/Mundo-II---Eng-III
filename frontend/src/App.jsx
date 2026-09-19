@@ -47,7 +47,8 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/login" element={<Login />} />
         <Route path="/landing" element={<Landing />} />
-        <Route path="/turma" element={<Turma />} />
+        {/* <Route path="/turma" element={<Turma />} /> */}
+        <Route path="/turma/:id" element={<Turma />} />
       </Routes>
     </BrowserRouter>
   )
