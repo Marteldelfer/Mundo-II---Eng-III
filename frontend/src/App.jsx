@@ -3,11 +3,12 @@ import logo from './assets/logo.png'
 import Cadastro from './pages/cadastro'
 import Login from './pages/login'
 import Landing from './pages/landing'
+import MinhasTurmas from './pages/minhas_turmas'
 import Turma from './pages/turma'
+import Aluno from './pages/aluno'
 import './App.css'
 
 function App() {
-
   return (
     <BrowserRouter>
       <Routes>
@@ -22,24 +23,24 @@ function App() {
                 <h2>A inclusão na sua sala de aula começa com um clique.</h2>
               </div>
               <div style={{display: 'flex', gap: '20px'}}>
-              <Link to="/cadastro">
-                <button
-                  style={{width: '300px', height: '75px'}}
-                  type="button"
-                  className="dark-gray-button"
+                <Link to="/cadastro">
+                  <button
+                    style={{width: '300px', height: '75px'}}
+                    type="button"
+                    className="dark-gray-button"
                   >
-                  Criar conta
-                </button>
-              </Link>
-              <Link to="/login">
-                <button
-                  style={{width: '300px', height: '75px'}}
-                  type="button"
-                  className="gray-button"
-                >
-                  Entrar
-                </button>
-              </Link>
+                    Criar conta
+                  </button>
+                </Link>
+                <Link to="/login">
+                  <button
+                    style={{width: '300px', height: '75px'}}
+                    type="button"
+                    className="gray-button"
+                  >
+                    Entrar
+                  </button>
+                </Link>
               </div>
             </section>
           </>
@@ -47,8 +48,9 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/login" element={<Login />} />
         <Route path="/landing" element={<Landing />} />
-        {/* <Route path="/turma" element={<Turma />} /> */}
+        <Route path="/minhas-turmas" element={<MinhasTurmas />} />
         <Route path="/turma/:id" element={<Turma />} />
+        <Route path="/aluno/:id" element={<Aluno />} />
       </Routes>
     </BrowserRouter>
   )

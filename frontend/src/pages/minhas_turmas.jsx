@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import '../App.css';
 
-export default function Landing() {
+export default function MinhasTurmas() {
+  const [turmas, setTurmas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
   const [modalAberto, setModalAberto] = useState(false);
   const [modoCriacao, setModoCriacao] = useState('manual');
   const [nome, setNome] = useState('');
@@ -15,8 +17,32 @@ export default function Landing() {
   const [dadosTurmaIA, setDadosTurmaIA] = useState(null);
   const [erroNomeIA, setErroNomeIA] = useState('');
   const [analisandoPlano, setAnalisandoPlano] = useState(false);
+  
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
+
+  useEffect(() => {
+    const carregarTurmas = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/turmas/usuario/${userId}`);
+        if (!response.ok) {
+          throw new Error('Erro ao buscar turmas');
+        }
+        const dados = await response.json();
+        setTurmas(dados);
+      } catch (error) {
+        console.error('Erro ao carregar turmas:', error);
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    if (userId) {
+      carregarTurmas();
+    } else {
+      navigate('/login');
+    }
+  }, [userId, navigate]);
 
   const handleNomeChange = (e) => {
     const valor = e.target.value;
@@ -71,8 +97,9 @@ export default function Landing() {
       if (!response.ok) {
         throw new Error('Falha no servidor');
       }
+      const turmaCriada = await response.json();
       fecharModal();
-      navigate('/minhas-turmas');
+      navigate(`/turma/${turmaCriada.id}`);
     } catch (error) {
       alert('Ocorreu um erro interno. Tente novamente mais tarde');
     }
@@ -146,8 +173,9 @@ export default function Landing() {
       if (!response.ok) {
         throw new Error('Falha no servidor');
       }
+      const turmaCriada = await response.json();
       fecharModal();
-      navigate('/minhas-turmas');
+      navigate(`/turma/${turmaCriada.id}`);
     } catch (error) {
       alert('Ocorreu um erro interno. Tente novamente mais tarde');
     }
@@ -156,6 +184,19 @@ export default function Landing() {
   const botaoDesabilitado = !nome.trim();
   const botaoCriarIADesabilitado = !dadosTurmaIA?.nome?.trim() || analisandoPlano;
 
+  if (carregando) {
+    return (
+      <div>
+        <section id="center">
+          <div className="logo">
+            <img src={logo} className="base" width="200" height="200" alt="" />
+          </div>
+          <p>Carregando turmas...</p>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div>
       <section id="center">
@@ -163,18 +204,63 @@ export default function Landing() {
           <img src={logo} className="base" width="200" height="200" alt="" />
         </div>
         <div>
-          <h2>Parece que você não tem nenhuma turma cadastrada.</h2>
+          <h2>Minhas Turmas</h2>
           <br />
           <button
-            style={{ width: '300px', height: '75px' }}
+            style={{ width: '350px', height: '75px', fontSize: '18px' }}
             type="button"
             className="purple-button"
             onClick={() => setModalAberto(true)}
           >
-            Cadastrar turma
+            Cadastrar nova turma
           </button>
         </div>
       </section>
+
+      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '20px',
+          }}
+        >
+          {turmas.map((turma) => (
+            <div
+              key={turma.id}
+              onClick={() => navigate(`/turma/${turma.id}`)}
+              style={{
+                backgroundColor: '#fff',
+                border: '2px solid #6b46c1',
+                borderRadius: '8px',
+                padding: '20px',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-5px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(107, 70, 193, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <h3 style={{ margin: '0 0 10px 0', color: '#6b46c1' }}>{turma.nome}</h3>
+              {turma.materia && (
+                <p style={{ margin: '5px 0', color: '#666' }}>
+                  <strong>Matéria:</strong> {turma.materia}
+                </p>
+              )}
+              {turma.descricao && (
+                <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>
+                  {turma.descricao}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {modalAberto && (
         <div style={styles.overlay}>
