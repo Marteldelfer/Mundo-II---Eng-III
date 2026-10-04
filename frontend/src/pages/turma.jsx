@@ -16,6 +16,7 @@ export default function Turma() {
 
   // Modais
   const [modalAdicionarAberto, setModalAdicionarAberto] = useState(false);
+  const [modalEditarAberto, setModalEditarAberto] = useState(false);
   const [modalListaPCDAberto, setModalListaPCDAberto] = useState(false);
   const [modalAdicionarExistenteAberto, setModalAdicionarExistenteAberto] = useState(false);
 
@@ -24,6 +25,13 @@ export default function Turma() {
   const [deficiencias, setDeficiencias] = useState([]);
   const [novaDeficiencia, setNovaDeficiencia] = useState('');
   const [erroNomeAluno, setErroNomeAluno] = useState('');
+
+  // Form editar aluno
+  const [alunoEditando, setAlunoEditando] = useState(null);
+  const [nomeEditandoAluno, setNomeEditandoAluno] = useState('');
+  const [deficienciasEditando, setDeficienciasEditando] = useState([]);
+  const [novaDeficienciaEditando, setNovaDeficienciaEditando] = useState('');
+  const [erroNomeEditando, setErroNomeEditando] = useState('');
 
   // Form lista PCD
   const [arquivoPCD, setArquivoPCD] = useState(null);
@@ -34,7 +42,6 @@ export default function Turma() {
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        // Carrega a turma
         const responseTurma = await fetch(`http://127.0.0.1:8000/turmas/${id}`);
         if (!responseTurma.ok) throw new Error('Erro ao buscar a turma');
         const dadosTurma = await responseTurma.json();
@@ -43,14 +50,12 @@ export default function Turma() {
         setMateriaEditada(dadosTurma.materia || '');
         setDescricaoEditada(dadosTurma.descricao || '');
 
-        // Carrega os alunos desta turma
         const responseAlunos = await fetch(`http://127.0.0.1:8000/alunos/turma/${id}`);
         if (responseAlunos.ok) {
           const dadosAlunos = await responseAlunos.json();
           setAlunos(dadosAlunos);
         }
 
-        // Carrega TODOS os alunos do sistema (para o modal "já cadastrado")
         const responseTodos = await fetch('http://127.0.0.1:8000/alunos/');
         if (responseTodos.ok) {
           const dados = await responseTodos.json();
@@ -79,7 +84,7 @@ export default function Turma() {
     }
   };
 
-  const handleDeletar = async () => {
+  const handleDeletarTurma = async () => {
     if (!confirm('Tem certeza que deseja deletar esta turma?')) return;
     try {
       const response = await fetch(`http://127.0.0.1:8000/turmas/${id}`, { method: 'DELETE' });
@@ -141,6 +146,95 @@ export default function Turma() {
     setErroNomeAluno('');
   };
 
+  // --- Editar aluno ---
+  const abrirModalEditar = (aluno) => {
+    setAlunoEditando(aluno);
+    setNomeEditandoAluno(aluno.nome);
+    
+    // Normaliza deficiências (pode vir como string ou array)
+    let defs = [];
+    if (Array.isArray(aluno.deficiencias)) {
+      defs = aluno.deficiencias;
+    } else if (typeof aluno.deficiencias === 'string' && aluno.deficiencias.trim()) {
+      defs = aluno.deficiencias.split(',').map(d => d.trim()).filter(Boolean);
+    }
+    setDeficienciasEditando(defs);
+    setNovaDeficienciaEditando('');
+    setErroNomeEditando('');
+    setModalEditarAberto(true);
+  };
+
+  const handleToggleDeficienciaEditando = (def) => {
+    setDeficienciasEditando(deficienciasEditando.includes(def) 
+      ? deficienciasEditando.filter(d => d !== def) 
+      : [...deficienciasEditando, def]);
+  };
+
+  const handleAdicionarDeficienciaPersonalizadaEditando = () => {
+    if (novaDeficienciaEditando.trim() && !deficienciasEditando.includes(novaDeficienciaEditando.trim())) {
+      setDeficienciasEditando([...deficienciasEditando, novaDeficienciaEditando.trim()]);
+      setNovaDeficienciaEditando('');
+    }
+  };
+
+  const handleSalvarEdicaoAluno = async () => {
+    if (!nomeEditandoAluno.trim()) {
+      setErroNomeEditando('Nome do aluno é obrigatório');
+      return;
+    }
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/alunos/${alunoEditando.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: nomeEditandoAluno,
+          deficiencias: deficienciasEditando.join(', '),
+        }),
+      });
+      if (!response.ok) throw new Error('Erro ao atualizar aluno');
+      const alunoAtualizado = await response.json();
+
+      // Atualiza nas duas listas
+      setAlunos(alunos.map(a => a.id === alunoAtualizado.id ? alunoAtualizado : a));
+      setTodosAlunos(todosAlunos.map(a => a.id === alunoAtualizado.id ? alunoAtualizado : a));
+      
+      fecharModalEditar();
+      alert('Aluno atualizado com sucesso!');
+    } catch (error) {
+      alert('Ocorreu um erro interno. Tente novamente mais tarde');
+    }
+  };
+
+  const fecharModalEditar = () => {
+    setModalEditarAberto(false);
+    setAlunoEditando(null);
+    setNomeEditandoAluno('');
+    setDeficienciasEditando([]);
+    setNovaDeficienciaEditando('');
+    setErroNomeEditando('');
+  };
+
+  // --- Excluir aluno ---
+  const handleExcluirAluno = async (alunoId) => {
+    if (!confirm('⚠️ ATENÇÃO: Este aluno será EXCLUÍDO do sistema e removido de TODAS as turmas. Esta ação não pode ser desfeita. Deseja continuar?')) {
+      return;
+    }
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/alunos/${alunoId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Erro ao excluir aluno');
+      }
+      setAlunos(alunos.filter(a => a.id !== alunoId));
+      setTodosAlunos(todosAlunos.filter(a => a.id !== alunoId));
+      alert('Aluno excluído com sucesso!');
+    } catch (error) {
+      alert(error.message || 'Ocorreu um erro interno. Tente novamente mais tarde');
+    }
+  };
+
   // --- Upload lista PCD ---
   const handleUploadPCD = async () => {
     if (!arquivoPCD) return;
@@ -197,7 +291,7 @@ export default function Turma() {
     }
   };
 
-  // --- Remover aluno da turma (sem deletar do sistema) ---
+  // --- Remover aluno da turma (sem deletar) ---
   const handleRemoverAluno = async (alunoId) => {
     if (!confirm('Tem certeza que deseja remover este aluno da turma? O aluno continuará cadastrado no sistema.')) {
       return;
@@ -222,8 +316,8 @@ export default function Turma() {
   };
 
   const botaoAdicionarDesabilitado = !nomeAluno.trim();
+  const botaoEditarDesabilitado = !nomeEditandoAluno.trim();
 
-  // ✅ CORREÇÃO: Mostra "Carregando..." apenas enquanto turma é null
   if (!turma) {
     return (
       <div>
@@ -247,7 +341,7 @@ export default function Turma() {
             <button style={{ width: '250px', height: '75px' }} type="button" className="purple-button" onClick={() => setModalListaPCDAberto(true)}>Upload Lista PCD</button>
             <button style={{ width: '250px', height: '75px' }} type="button" className="purple-button" onClick={() => setModalAdicionarExistenteAberto(true)}>Adicionar Aluno Já Cadastrado</button>
             <button style={{ width: '150px', height: '75px' }} type="button" className="gray-button" onClick={handleVoltar}>Voltar</button>
-            <button style={{ width: '150px', height: '75px' }} type="button" className="dark-gray-button" onClick={handleDeletar}>Deletar</button>
+            <button style={{ width: '150px', height: '75px' }} type="button" className="dark-gray-button" onClick={handleDeletarTurma}>Deletar Turma</button>
           </div>
         </div>
       </section>
@@ -269,7 +363,8 @@ export default function Turma() {
                   backgroundColor: '#fff',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  gap: '10px'
                 }}
               >
                 <div 
@@ -286,14 +381,32 @@ export default function Turma() {
                     Clique para ver detalhes
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoverAluno(aluno.id)}
-                  className="dark-gray-button"
-                  style={{ height: '40px', fontSize: '13px', padding: '0 15px', marginLeft: '10px' }}
-                >
-                  Remover
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => abrirModalEditar(aluno)}
+                    className="purple-button"
+                    style={{ height: '40px', fontSize: '13px', padding: '0 15px' }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoverAluno(aluno.id)}
+                    className="gray-button"
+                    style={{ height: '40px', fontSize: '13px', padding: '0 15px' }}
+                  >
+                    Remover
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExcluirAluno(aluno.id)}
+                    className="dark-gray-button"
+                    style={{ height: '40px', fontSize: '13px', padding: '0 15px', backgroundColor: '#dc2626', color: '#fff' }}
+                  >
+                    Excluir
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -355,6 +468,110 @@ export default function Turma() {
             <div style={modalStyles.buttonGroup}>
               <button type="button" onClick={fecharModalAdicionar} className="gray-button" style={modalStyles.btnCancelar}>Cancelar</button>
               <button type="button" onClick={handleAdicionarAluno} disabled={botaoAdicionarDesabilitado} className="purple-button" style={{ ...modalStyles.btnCriar, opacity: botaoAdicionarDesabilitado ? 0.5 : 1, cursor: botaoAdicionarDesabilitado ? 'not-allowed' : 'pointer' }}>Adicionar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Aluno */}
+      {modalEditarAberto && alunoEditando && (
+        <div style={modalStyles.overlay}>
+          <div style={modalStyles.modal}>
+            <h3 style={{ marginBottom: '15px', color: '#000' }}>Editar Aluno</h3>
+            <label style={modalStyles.label}>Nome do Aluno:
+              <input 
+                type="text" 
+                value={nomeEditandoAluno} 
+                onChange={(e) => { 
+                  setNomeEditandoAluno(e.target.value); 
+                  if (e.target.value.trim()) setErroNomeEditando(''); 
+                }} 
+                style={modalStyles.input} 
+              />
+            </label>
+            {erroNomeEditando && <p style={modalStyles.erroText}>{erroNomeEditando}</p>}
+            
+            <label style={modalStyles.label}>Deficiências:
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                {deficienciasPredefinidas.map((def) => (
+                  <button 
+                    key={def} 
+                    type="button" 
+                    onClick={() => handleToggleDeficienciaEditando(def)} 
+                    style={{ 
+                      padding: '6px 12px', 
+                      border: '1px solid #6b46c1', 
+                      borderRadius: '15px', 
+                      backgroundColor: deficienciasEditando.includes(def) ? '#6b46c1' : '#fff', 
+                      color: deficienciasEditando.includes(def) ? '#fff' : '#6b46c1', 
+                      cursor: 'pointer', 
+                      fontSize: '13px' 
+                    }}
+                  >
+                    {def}
+                  </button>
+                ))}
+              </div>
+            </label>
+            
+            <label style={modalStyles.label}>Adicionar deficiência personalizada:
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <input 
+                  type="text" 
+                  value={novaDeficienciaEditando} 
+                  onChange={(e) => setNovaDeficienciaEditando(e.target.value)} 
+                  style={{ ...modalStyles.input, flex: 1 }} 
+                  placeholder="Digite a deficiência" 
+                />
+                <button 
+                  type="button" 
+                  onClick={handleAdicionarDeficienciaPersonalizadaEditando} 
+                  className="purple-button" 
+                  style={{ height: '40px', fontSize: '13px' }}
+                >
+                  Adicionar
+                </button>
+              </div>
+            </label>
+            
+            {deficienciasEditando.length > 0 && (
+              <div style={{ marginTop: '10px' }}>
+                <p style={{ fontSize: '13px', color: '#666', marginBottom: '5px' }}>Selecionadas:</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                  {deficienciasEditando.map((def) => (
+                    <span 
+                      key={def} 
+                      style={{ backgroundColor: '#6b46c1', color: '#fff', padding: '4px 10px', borderRadius: '12px', fontSize: '12px' }}
+                    >
+                      {def}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div style={modalStyles.buttonGroup}>
+              <button 
+                type="button" 
+                onClick={fecharModalEditar} 
+                className="gray-button" 
+                style={modalStyles.btnCancelar}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                onClick={handleSalvarEdicaoAluno} 
+                disabled={botaoEditarDesabilitado} 
+                className="purple-button" 
+                style={{ 
+                  ...modalStyles.btnCriar, 
+                  opacity: botaoEditarDesabilitado ? 0.5 : 1, 
+                  cursor: botaoEditarDesabilitado ? 'not-allowed' : 'pointer' 
+                }}
+              >
+                Salvar
+              </button>
             </div>
           </div>
         </div>
