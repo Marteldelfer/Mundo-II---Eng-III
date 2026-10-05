@@ -1,136 +1,176 @@
 from datetime import datetime
-from typing import List
 from fastapi import APIRouter, status, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from src.modelos.aluno_turma import AlunoTurma
 from src.modelos.observacao import Observacao
-from src.modelos.aluno import Aluno
+from src.modelos.turma import Turma
 from src.modelos.user import User
 from src.utils.database import get_db
+from src.utils.auth import get_current_user
 
-router = APIRouter(
-    prefix="/observacoes",
-    tags=["Observacoes"]
-)
 
+router = APIRouter(prefix="/observacoes", tags=["Observacoes"])
+
+
+# ---------------- Schemas ----------------
 class ObservacaoCreate(BaseModel):
     aluno_id: int
-    professor_id: int
+    turma_id: int
     texto: str
 
 class ObservacaoUpdate(BaseModel):
     texto: str
 
-@router.get("/aluno/{aluno_id}")
-def get_observacoes_por_aluno_e_professor(aluno_id: int, professor_id: int, db: Session = Depends(get_db)):
-    """Retorna apenas as observações do professor logado sobre o aluno."""
-    aluno = db.query(Aluno).filter(Aluno.id == aluno_id).first()
-    if not aluno:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aluno não encontrado")
-    
-    professor = db.query(User).filter(User.id == professor_id).first()
-    if not professor:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Professor não encontrado")
-    
+
+# ---------------- Helpers ----------------
+def _serializar(obs: Observacao) -> dict:
+    return {
+        "id": obs.id,
+        "aluno_turma_id": obs.aluno_turma_id,
+        "texto": obs.texto,
+        "data_criacao": obs.data_criacao.strftime("%d/%m/%Y %H:%M"),
+        "data_edicao": obs.data_edicao.strftime("%d/%m/%Y %H:%M") if obs.data_edicao else None,
+    }
+
+
+def _carregar_vinculo_do_usuario(
+    aluno_id: int,
+    turma_id: int,
+    db: Session,
+    usuario: User,
+) -> AlunoTurma:
+    """
+    Carrega o vínculo Aluno↔Turma garantindo que a turma pertence ao usuário logado.
+    Devolve 404 (não 403) para não vazar existência.
+    """
+    turma = db.query(Turma).filter(Turma.id == turma_id).first()
+    if not turma or turma.user_id != usuario.id:
+        raise HTTPException(status_code=404, detail="Turma não encontrada")
+
+    vinculo = (
+        db.query(AlunoTurma)
+        .filter(
+            AlunoTurma.aluno_id == aluno_id,
+            AlunoTurma.turma_id == turma_id,
+        )
+        .first()
+    )
+    if not vinculo:
+        raise HTTPException(status_code=404, detail="Aluno não está nesta turma")
+
+    return vinculo
+
+
+def _carregar_observacao_do_usuario(
+    observacao_id: int,
+    db: Session,
+    usuario: User,
+) -> Observacao:
+    """
+    Carrega a observação garantindo que a turma do vínculo pertence ao usuário.
+    """
+    obs = (
+        db.query(Observacao)
+        .options(
+            joinedload(Observacao.vinculo).joinedload(AlunoTurma.turma),
+        )
+        .filter(Observacao.id == observacao_id)
+        .first()
+    )
+    if not obs:
+        raise HTTPException(status_code=404, detail="Observação não encontrada")
+
+    if obs.vinculo.turma.user_id != usuario.id:
+        # 404 para não vazar existência
+        raise HTTPException(status_code=404, detail="Observação não encontrada")
+
+    return obs
+
+
+# ---------------- Endpoints ----------------
+
+@router.get("/aluno/{aluno_id}/turma/{turma_id}", status_code=status.HTTP_200_OK)
+def listar_observacoes(
+    aluno_id: int,
+    turma_id: int,
+    db: Session = Depends(get_db),
+    usuario_atual: User = Depends(get_current_user),
+):
+    """Lista todas as entradas de diário do aluno NAQUELA turma, mais recentes primeiro."""
+    vinculo = _carregar_vinculo_do_usuario(aluno_id, turma_id, db, usuario_atual)
+
     observacoes = (
         db.query(Observacao)
-        .filter(Observacao.aluno_id == aluno_id, Observacao.professor_id == professor_id)
+        .filter(Observacao.aluno_turma_id == vinculo.id)
         .order_by(Observacao.data_criacao.desc())
         .all()
     )
-    
-    return [
-        {
-            "id": obs.id,
-            "aluno_id": obs.aluno_id,
-            "professor_id": obs.professor_id,
-            "texto": obs.texto,
-            "data_criacao": obs.data_criacao.strftime("%d/%m/%Y %H:%M"),
-            "data_edicao": obs.data_edicao.strftime("%d/%m/%Y %H:%M") if obs.data_edicao else None
-        }
-        for obs in observacoes
-    ]
+    return [_serializar(o) for o in observacoes]
+
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_observacao(observacao: ObservacaoCreate, db: Session = Depends(get_db)):
-    aluno = db.query(Aluno).filter(Aluno.id == observacao.aluno_id).first()
-    if not aluno:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aluno não encontrado")
-    
-    professor = db.query(User).filter(User.id == observacao.professor_id).first()
-    if not professor:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Professor não encontrado")
-    
+def criar_observacao(
+    observacao: ObservacaoCreate,
+    db: Session = Depends(get_db),
+    usuario_atual: User = Depends(get_current_user),
+):
     if not observacao.texto or not observacao.texto.strip():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Texto da observação é obrigatório")
-    
+        raise HTTPException(400, "Texto da observação é obrigatório")
+
+    vinculo = _carregar_vinculo_do_usuario(
+        observacao.aluno_id, observacao.turma_id, db, usuario_atual,
+    )
+
     try:
-        nova_observacao = Observacao(
-            aluno_id=observacao.aluno_id,
-            professor_id=observacao.professor_id,
-            texto=observacao.texto.strip()
+        nova = Observacao(
+            aluno_turma_id=vinculo.id,
+            texto=observacao.texto.strip(),
         )
-        db.add(nova_observacao)
+        db.add(nova)
         db.commit()
-        db.refresh(nova_observacao)
-        
-        return {
-            "id": nova_observacao.id,
-            "aluno_id": nova_observacao.aluno_id,
-            "professor_id": nova_observacao.professor_id,
-            "texto": nova_observacao.texto,
-            "data_criacao": nova_observacao.data_criacao.strftime("%d/%m/%Y %H:%M"),
-            "data_edicao": None
-        }
+        db.refresh(nova)
+        return _serializar(nova)
     except Exception:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ocorreu um erro interno na criação da observação.")
+        raise HTTPException(500, "Erro ao criar observação.")
 
-@router.put("/{id}")
-def update_observacao(id: int, observacao_data: ObservacaoUpdate, professor_id: int, db: Session = Depends(get_db)):
-    """Só permite editar observação se for do professor logado."""
-    observacao = db.query(Observacao).filter(Observacao.id == id).first()
-    if not observacao:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Observação não encontrada")
-    
-    if observacao.professor_id != professor_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Você só pode editar suas próprias observações")
-    
+
+@router.put("/{observacao_id}", status_code=status.HTTP_200_OK)
+def atualizar_observacao(
+    observacao_id: int,
+    observacao_data: ObservacaoUpdate,
+    db: Session = Depends(get_db),
+    usuario_atual: User = Depends(get_current_user),
+):
     if not observacao_data.texto or not observacao_data.texto.strip():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Texto da observação é obrigatório")
-    
-    try:
-        observacao.texto = observacao_data.texto.strip()
-        observacao.data_edicao = datetime.utcnow()
-        db.commit()
-        db.refresh(observacao)
-        
-        return {
-            "id": observacao.id,
-            "aluno_id": observacao.aluno_id,
-            "professor_id": observacao.professor_id,
-            "texto": observacao.texto,
-            "data_criacao": observacao.data_criacao.strftime("%d/%m/%Y %H:%M"),
-            "data_edicao": observacao.data_edicao.strftime("%d/%m/%Y %H:%M") if observacao.data_edicao else None
-        }
-    except Exception:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ocorreu um erro interno na atualização da observação.")
+        raise HTTPException(400, "Texto da observação é obrigatório")
 
-@router.delete("/{id}", status_code=status.HTTP_200_OK)
-def delete_observacao(id: int, professor_id: int, db: Session = Depends(get_db)):
-    """Só permite deletar observação se for do professor logado."""
-    observacao = db.query(Observacao).filter(Observacao.id == id).first()
-    if not observacao:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Observação não encontrada")
-    
-    if observacao.professor_id != professor_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Você só pode excluir suas próprias observações")
-    
+    obs = _carregar_observacao_do_usuario(observacao_id, db, usuario_atual)
+
     try:
-        db.delete(observacao)
+        obs.texto = observacao_data.texto.strip()
+        obs.data_edicao = datetime.utcnow()
         db.commit()
-        return {"mensagem": "Observação deletada com sucesso"}
+        db.refresh(obs)
+        return _serializar(obs)
     except Exception:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ocorreu um erro interno na deleção da observação.")
+        raise HTTPException(500, "Erro ao atualizar observação.")
+
+
+@router.delete("/{observacao_id}", status_code=status.HTTP_200_OK)
+def excluir_observacao(
+    observacao_id: int,
+    db: Session = Depends(get_db),
+    usuario_atual: User = Depends(get_current_user),
+):
+    obs = _carregar_observacao_do_usuario(observacao_id, db, usuario_atual)
+
+    try:
+        db.delete(obs)
+        db.commit()
+        return {"mensagem": "Observação excluída com sucesso"}
+    except Exception:
+        db.rollback()
+        raise HTTPException(500, "Erro ao excluir observação.")

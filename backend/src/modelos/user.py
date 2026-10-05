@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String
 from src.utils.database import Base
 from pydantic import BaseModel, ConfigDict
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -10,16 +11,28 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     senha_hash = Column(String, nullable=False)
 
+
 class UserCreate(BaseModel):
     nome: str
     email: str
     senha: str  # sem hash
+
 
 class UserResponse(BaseModel):
     id: int
     nome: str
     email: str
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserResponseComToken(BaseModel):
+    """Resposta do cadastro: inclui o JWT para auto-login."""
+    id: int
+    nome: str
+    email: str
+    token: str
+    model_config = ConfigDict(from_attributes=True)
+
 
 class UserLogin(BaseModel):
     email: str

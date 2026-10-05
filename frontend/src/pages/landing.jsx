@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import Header from '../components/Header';
+import { headersAuth, headersAuthUpload } from '../utils/auth';
 import '../App.css';
 
 export default function Landing() {
@@ -16,7 +18,6 @@ export default function Landing() {
   const [erroNomeIA, setErroNomeIA] = useState('');
   const [analisandoPlano, setAnalisandoPlano] = useState(false);
   const navigate = useNavigate();
-  const userId = localStorage.getItem('userId');
 
   const handleNomeChange = (e) => {
     const valor = e.target.value;
@@ -55,17 +56,17 @@ export default function Landing() {
         formData.append('nome', nome);
         formData.append('materia', materia);
         formData.append('descricao', descricao);
-        formData.append('user_id', userId);
         formData.append('plano_ensino', arquivoPlano);
         response = await fetch('http://127.0.0.1:8000/turmas/upload', {
           method: 'POST',
+          headers: headersAuthUpload(),
           body: formData,
         });
       } else {
         response = await fetch('http://127.0.0.1:8000/turmas', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, materia, descricao, user_id: parseInt(userId) }),
+          headers: headersAuth(),
+          body: JSON.stringify({ nome, materia, descricao }),
         });
       }
       if (!response.ok) {
@@ -86,9 +87,7 @@ export default function Landing() {
   };
 
   const handleAnalisarPlano = async () => {
-    if (!arquivoPlanoIA) {
-      return;
-    }
+    if (!arquivoPlanoIA) return;
     const extensao = arquivoPlanoIA.name.split('.').pop()?.toLowerCase();
     if (!['pdf', 'docx', 'pptx'].includes(extensao)) {
       alert('Formato de arquivo não suportado. Envie um arquivo PDF, DOCX ou PPTX.');
@@ -104,6 +103,7 @@ export default function Landing() {
       formData.append('plano_ensino', arquivoPlanoIA);
       const response = await fetch('http://127.0.0.1:8000/turmas/analisar-plano', {
         method: 'POST',
+        headers: headersAuthUpload(),
         body: formData,
       });
       if (!response.ok) {
@@ -137,10 +137,10 @@ export default function Landing() {
       formData.append('nome', dadosTurmaIA.nome);
       formData.append('materia', dadosTurmaIA.materia || '');
       formData.append('descricao', dadosTurmaIA.descricao || '');
-      formData.append('user_id', userId);
       formData.append('plano_ensino', arquivoPlanoIA);
       const response = await fetch('http://127.0.0.1:8000/turmas/upload', {
         method: 'POST',
+        headers: headersAuthUpload(),
         body: formData,
       });
       if (!response.ok) {
@@ -158,6 +158,8 @@ export default function Landing() {
 
   return (
     <div>
+      <Header />
+
       <section id="center">
         <div className="logo">
           <img src={logo} className="base" width="200" height="200" alt="" />

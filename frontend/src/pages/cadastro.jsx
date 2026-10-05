@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import { salvarAutenticacao } from '../utils/auth';
 import '../App.css';
 
 export default function Cadastro() {
@@ -14,17 +15,18 @@ export default function Cadastro() {
   let erroValidacao = '';
   let botaoDesabilitado = false;
 
-  if (senha.length > 0) {
-    if (senha.length < 8) {
-      erroValidacao = 'A senha deve ter pelo menos 8 caracteres';
-      botaoDesabilitado = true;
-    } else if (!/[A-Z]/.test(senha)) {
-      erroValidacao = 'A senha deve ter pelo menos uma letra maiúscula';
-      botaoDesabilitado = true;
-    } else if (!/[^a-zA-Z0-9]/.test(senha)) {
-      erroValidacao = 'A senha deve ter pelo menos um caractere especial';
-      botaoDesabilitado = true;
-    }
+  if (senha.length < 8) {
+    erroValidacao = 'A senha deve ter pelo menos 8 caracteres';
+    botaoDesabilitado = true;
+  } else if (senha.length > 72) {
+    erroValidacao = 'A senha deve ter no máximo 72 caracteres';
+    botaoDesabilitado = true;
+  } else if (!/[A-Z]/.test(senha)) {
+    erroValidacao = 'A senha deve ter pelo menos uma letra maiúscula';
+    botaoDesabilitado = true;
+  } else if (!/[^a-zA-Z0-9]/.test(senha)) {
+    erroValidacao = 'A senha deve ter pelo menos um caractere especial';
+    botaoDesabilitado = true;
   }
 
   if (!nome || !email || !senha || !confirmarSenha) {
@@ -33,28 +35,41 @@ export default function Cadastro() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMensagem('');
+
     if (senha !== confirmarSenha) {
       setMensagem('As senhas não coincidem!');
       return;
     }
+
     try {
-      const response = await fetch('http://127.0.0.1:8000/usuarios', {
+      const response = await fetch('http://127.0.0.1:8000/usuarios/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome, email, senha }),
       });
       const data = await response.json();
+
       if (!response.ok) {
-        setMensagem(data.detail[0] || 'Erro ao cadastrar');
-      } else {
-        localStorage.setItem('userId', data.id);
-        setMensagem('Cadastro realizado com sucesso!');
-        setTimeout(() => {
-          navigate('/landing');
-        }, 1500);
+        // FastAPI pode retornar detail como string OU array
+        const detalhe = Array.isArray(data.detail)
+          ? data.detail[0]
+          : data.detail;
+        setMensagem(detalhe || 'Erro ao cadastrar');
+        return;
       }
+
+      // ✅ Auto-login: salva token JWT + dados do usuário
+      salvarAutenticacao(data.token, {
+        id: data.id,
+        nome: data.nome,
+        email: data.email,
+      });
+
+      setMensagem('Cadastro realizado com sucesso!');
+      setTimeout(() => {
+        navigate('/landing');
+      }, 1500);
     } catch (error) {
       setMensagem('Erro de conexão com o servidor.');
     }

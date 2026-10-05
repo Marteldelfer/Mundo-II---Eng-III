@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import { salvarAutenticacao } from '../utils/auth';
 import '../App.css';
 
 export default function Login() {
@@ -11,21 +12,30 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMensagem('');
+
     try {
-      const response = await fetch('http://127.0.0.1:8000/usuarios/login', {
+      const response = await fetch('http://127.0.0.1:8000/usuarios/login/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha }),
       });
       const data = await response.json();
+
       if (!response.ok) {
-        setMensagem(data.detail || 'Erro ao realizar login');
-      } else {
-        localStorage.setItem('userId', data.usuario.id);
-        navigate('/landing');
+        // FastAPI pode retornar detail como string OU array
+        const detalhe = Array.isArray(data.detail)
+          ? data.detail[0]
+          : data.detail;
+        setMensagem(detalhe || 'Erro ao realizar login');
+        return;
       }
+
+      // ✅ Salva token JWT + dados do usuário em cookies
+      salvarAutenticacao(data.token, data.usuario);
+
+      // Redireciona para a área protegida
+      navigate('/landing');
     } catch (error) {
       setMensagem('Erro de conexão com o servidor.');
     }
@@ -64,7 +74,7 @@ export default function Login() {
           <input type="submit" value="Entrar" className="dark-gray-button" />
         </form>
       </section>
-      {mensagem && <p>{mensagem}</p>}
+      {mensagem && <p style={{ color: 'red', fontWeight: 'bold' }}>{mensagem}</p>}
     </div>
   );
 }

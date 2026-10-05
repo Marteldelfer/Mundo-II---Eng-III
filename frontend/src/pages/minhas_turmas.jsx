@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import Header from '../components/Header';
+import { headersAuth, headersAuthUpload } from '../utils/auth';
 import '../App.css';
 
 export default function MinhasTurmas() {
@@ -17,14 +19,19 @@ export default function MinhasTurmas() {
   const [dadosTurmaIA, setDadosTurmaIA] = useState(null);
   const [erroNomeIA, setErroNomeIA] = useState('');
   const [analisandoPlano, setAnalisandoPlano] = useState(false);
-  
+
   const navigate = useNavigate();
-  const userId = localStorage.getItem('userId');
 
   useEffect(() => {
     const carregarTurmas = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/turmas/usuario/${userId}`);
+        const response = await fetch('http://127.0.0.1:8000/turmas/', {
+          headers: headersAuth(),
+        });
+        if (response.status === 401) {
+          navigate('/login', { replace: true });
+          return;
+        }
         if (!response.ok) {
           throw new Error('Erro ao buscar turmas');
         }
@@ -37,12 +44,8 @@ export default function MinhasTurmas() {
       }
     };
 
-    if (userId) {
-      carregarTurmas();
-    } else {
-      navigate('/login');
-    }
-  }, [userId, navigate]);
+    carregarTurmas();
+  }, [navigate]);
 
   const handleNomeChange = (e) => {
     const valor = e.target.value;
@@ -81,17 +84,17 @@ export default function MinhasTurmas() {
         formData.append('nome', nome);
         formData.append('materia', materia);
         formData.append('descricao', descricao);
-        formData.append('user_id', userId);
         formData.append('plano_ensino', arquivoPlano);
         response = await fetch('http://127.0.0.1:8000/turmas/upload', {
           method: 'POST',
+          headers: headersAuthUpload(),
           body: formData,
         });
       } else {
         response = await fetch('http://127.0.0.1:8000/turmas', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, materia, descricao, user_id: parseInt(userId) }),
+          headers: headersAuth(),
+          body: JSON.stringify({ nome, materia, descricao }),
         });
       }
       if (!response.ok) {
@@ -131,6 +134,7 @@ export default function MinhasTurmas() {
       formData.append('plano_ensino', arquivoPlanoIA);
       const response = await fetch('http://127.0.0.1:8000/turmas/analisar-plano', {
         method: 'POST',
+        headers: headersAuthUpload(),
         body: formData,
       });
       if (!response.ok) {
@@ -164,10 +168,10 @@ export default function MinhasTurmas() {
       formData.append('nome', dadosTurmaIA.nome);
       formData.append('materia', dadosTurmaIA.materia || '');
       formData.append('descricao', dadosTurmaIA.descricao || '');
-      formData.append('user_id', userId);
       formData.append('plano_ensino', arquivoPlanoIA);
       const response = await fetch('http://127.0.0.1:8000/turmas/upload', {
         method: 'POST',
+        headers: headersAuthUpload(),
         body: formData,
       });
       if (!response.ok) {
@@ -187,6 +191,7 @@ export default function MinhasTurmas() {
   if (carregando) {
     return (
       <div>
+        <Header />
         <section id="center">
           <div className="logo">
             <img src={logo} className="base" width="200" height="200" alt="" />
@@ -199,6 +204,8 @@ export default function MinhasTurmas() {
 
   return (
     <div>
+      <Header />
+
       <section id="center">
         <div className="logo">
           <img src={logo} className="base" width="200" height="200" alt="" />
