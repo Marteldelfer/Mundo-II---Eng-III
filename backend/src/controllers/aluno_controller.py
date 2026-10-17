@@ -9,6 +9,7 @@ from src.modelos.user import User
 from src.utils.database import get_db
 from src.utils.auth import get_current_user
 from src.services.openai_service import analisar_lista_pcd
+from pydantic import ConfigDict 
 
 
 router = APIRouter(prefix="/alunos", tags=["Alunos"])
@@ -19,8 +20,8 @@ class TurmaResumo(BaseModel):
     id: int
     nome: str
     materia: Optional[str] = None
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)
 
 class AlunoCreate(BaseModel):
     nome: str
