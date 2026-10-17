@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from src.utils.database import Base
@@ -17,13 +17,16 @@ class AlunoTurma(Base):
 
     engajamento = Column(Float, default=0.0, nullable=False)
 
-    data_criacao = Column(DateTime, default=datetime.utcnow, nullable=False)
+    data_criacao = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
     data_edicao = Column(DateTime, nullable=True)
 
     aluno = relationship("Aluno", back_populates="vinculos")
     turma = relationship("Turma", back_populates="vinculos")
 
-    # 👇 Cada vínculo tem VÁRIAS observações (diário)
     observacoes = relationship(
         "Observacao",
         back_populates="vinculo",

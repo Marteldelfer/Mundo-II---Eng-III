@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from src.utils.database import Base
@@ -20,7 +20,11 @@ class Observacao(Base):
     )
 
     texto = Column(Text, nullable=False)
-    data_criacao = Column(DateTime, default=datetime.utcnow, nullable=False)
+    data_criacao = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
     data_edicao = Column(DateTime, nullable=True)
 
     vinculo = relationship("AlunoTurma", back_populates="observacoes")
