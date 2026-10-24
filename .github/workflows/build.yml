@@ -18,6 +18,8 @@ jobs:
       run:
         working-directory: backend
     steps:
+      - uses: actions/checkout@v4
+      
       - name: Create .env
         run: |
           cat > .env << EOF
@@ -25,7 +27,6 @@ jobs:
           OPENAI_MODEL=${{ secrets.OPENAI_MODEL }}
           SECRET_KEY=${{ secrets.SECRET_KEY }}
           EOF
-      - uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
