@@ -2,3 +2,6 @@
 .venv/
 venv/
 *.db
+*.coverage
+.env
+*.egg-info/

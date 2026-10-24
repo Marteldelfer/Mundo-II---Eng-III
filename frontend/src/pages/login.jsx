@@ -1,35 +1,41 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
-import logo from '../assets/logo.png'
-import Cadastro from './cadastro'
-import '../App.css'
+import { Link, useNavigate } from 'react-router-dom';
+import logo from '../assets/logo.png';
+import { salvarAutenticacao } from '../utils/auth';
+import '../App.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [mensagem, setMensagem] = useState('');
-  
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); 
-    
-    try {
-      const response = await fetch('http://127.0.0.1:8000/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, senha }), 
-      });
+    e.preventDefault();
+    setMensagem('');
 
+    try {
+      const response = await fetch('http://127.0.0.1:8000/usuarios/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha }),
+      });
       const data = await response.json();
 
       if (!response.ok) {
-        setMensagem(data.detail || 'Erro ao realizar login');
-      } else {
-        navigate('/landing');
+        // FastAPI pode retornar detail como string OU array
+        const detalhe = Array.isArray(data.detail)
+          ? data.detail[0]
+          : data.detail;
+        setMensagem(detalhe || 'Erro ao realizar login');
+        return;
       }
+
+      // ✅ Salva token JWT + dados do usuário em cookies
+      salvarAutenticacao(data.token, data.usuario);
+
+      // Redireciona para a área protegida
+      navigate('/landing');
     } catch (error) {
       setMensagem('Erro de conexão com o servidor.');
     }
@@ -37,38 +43,38 @@ export default function Login() {
 
   return (
     <div>
-    <section id="center">
+      <section id="center">
         <div className="logo">
-            <img src={logo} className="base" width="200" height="200" alt="" />
-          </div>
-      <form style={{width: '75%'}} onSubmit={handleSubmit}>
-      <label>
-        <h4 style={{marginBottom: '8px'}}>E-mail:</h4>
-        <input 
-          type="email" 
-          name="email" 
-          value={email} 
-          onChange={(e) => setEmail(e.target.value)} 
-          required 
-        />
-      </label>
-      <label>
-        <h4 style={{marginBottom: '8px'}}>Senha:</h4>
-        <input 
-          type="password" 
-          name="password" 
-          value={senha} 
-          onChange={(e) => setSenha(e.target.value)} 
-          required 
-        />
-      </label>
-      <h4 style={{marginBottom: '8px'}}>Não possui uma conta? <Link to="/cadastro">Criar conta</Link></h4>
-      <input type="submit" value="Entrar" className="signin-button" />
-      
-      </form>
-    </section>
-      
-      {mensagem && <p>{mensagem}</p>}
+          <img src={logo} className="base" width="200" height="200" alt="" />
+        </div>
+        <form style={{ width: '75%' }} onSubmit={handleSubmit}>
+          <label>
+            <h4 style={{ marginBottom: '8px' }}>E-mail:</h4>
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            <h4 style={{ marginBottom: '8px' }}>Senha:</h4>
+            <input
+              type="password"
+              name="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              required
+            />
+          </label>
+          <h4 style={{ marginBottom: '8px' }}>
+            Não possui uma conta? <Link to="/cadastro">Criar conta</Link>
+          </h4>
+          <input type="submit" value="Entrar" className="dark-gray-button" />
+        </form>
+      </section>
+      {mensagem && <p style={{ color: 'red', fontWeight: 'bold' }}>{mensagem}</p>}
     </div>
   );
 }

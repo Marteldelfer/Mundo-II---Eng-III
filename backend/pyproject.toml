@@ -4,10 +4,16 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.141.1",
+    "openai>=2.0.0",
+    "python-dotenv>=1.0.0",
     "sqlalchemy>=2.0.52",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "bcrypt==4.0.1",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
 ]
