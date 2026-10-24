@@ -19,7 +19,7 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Create .env
         run: |
           cat > .env << EOF
@@ -39,9 +39,6 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --locked --all-extras --dev
-
-      - name: Lint (optional - remove if not using ruff)
-        run: uv run ruff check .
 
       - name: Test (optional - remove if no tests yet)
         run: uv run pytest
