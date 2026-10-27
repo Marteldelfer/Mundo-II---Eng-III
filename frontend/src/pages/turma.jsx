@@ -1,8 +1,10 @@
-import logo from '../assets/logo.png';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { headersAuth, headersAuthUpload } from '../utils/auth';
+import Icone from '../components/Icone';
+import Modal from '../components/Modal';
+import Carregando from '../components/Carregando';
 import '../App.css';
 
 export default function Turma() {
@@ -419,656 +421,488 @@ export default function Turma() {
 
   if (!turma) {
     return (
-      <div>
+      <>
         <Header />
-        <section id="center">
-          <div className="logo">
-            <img src={logo} className="base" width="200" height="200" alt="" />
-          </div>
-          <p>Carregando...</p>
-        </section>
-      </div>
+        <Carregando />
+      </>
     );
   }
 
+  const alunosDisponiveis = todosAlunos.filter((aluno) => !alunos.find((a) => a.id === aluno.id));
+
   return (
-    <div>
+    <>
       <Header />
 
-      <section id="center">
-        <div className="logo">
-          <img src={logo} className="base" width="200" height="200" alt="" />
-        </div>
-        <div>
-          <h2>Dashboard da turma {turma.nome}</h2>
-          <br />
-          <div
-            style={{
-              display: 'flex',
-              gap: '10px',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-            }}
-          >
+      <main className="page">
+        <button type="button" className="back-link" onClick={handleVoltar}>
+          <Icone nome="arrowBack" />
+          Minhas turmas
+        </button>
+
+        <div className="page-header">
+          <div>
+            <span className="eyebrow">Dashboard da turma</span>
+            <h1>{turma.nome}</h1>
+            {turma.materia && <p>{turma.materia}</p>}
+          </div>
+          <div className="page-actions">
             <button
-              style={{ width: '200px', height: '75px' }}
               type="button"
-              className="purple-button"
-              onClick={() => setModalAdicionarAberto(true)}
-            >
-              Adicionar Aluno
-            </button>
-            <button
-              style={{ width: '250px', height: '75px' }}
-              type="button"
-              className="purple-button"
+              className="btn btn-tonal"
               onClick={() => setModalListaPCDAberto(true)}
             >
-              Upload Lista PCD
+              <Icone nome="upload" />
+              Upload lista PCD
             </button>
             <button
-              style={{ width: '250px', height: '75px' }}
               type="button"
-              className="purple-button"
+              className="btn btn-tonal"
               onClick={() => setModalAdicionarExistenteAberto(true)}
             >
-              Adicionar Aluno Já Cadastrado
+              <Icone nome="group" />
+              Aluno já cadastrado
             </button>
             <button
-              style={{ width: '150px', height: '75px' }}
               type="button"
-              className="gray-button"
-              onClick={handleVoltar}
+              className="btn btn-primary"
+              onClick={() => setModalAdicionarAberto(true)}
             >
-              Voltar
-            </button>
-            <button
-              style={{ width: '150px', height: '75px' }}
-              type="button"
-              className="dark-gray-button"
-              onClick={handleDeletarTurma}
-            >
-              Deletar Turma
+              <Icone nome="personAdd" />
+              Adicionar aluno
             </button>
           </div>
         </div>
-      </section>
 
-      {/* Lista de alunos da turma */}
-      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-        <h3>Alunos da Turma ({alunos.length})</h3>
-        {alunos.length === 0 ? (
-          <p style={{ color: '#666' }}>Nenhum aluno cadastrado nesta turma.</p>
-        ) : (
-          <div style={{ display: 'grid', gap: '10px' }}>
-            {alunos.map((aluno) => (
-              <div
-                key={aluno.id}
-                style={{
-                  border: '1px solid #6b46c1',
-                  borderRadius: '8px',
-                  padding: '15px',
-                  backgroundColor: '#fff',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '10px',
-                }}
-              >
-                <div
-                  onClick={() => handleVerAluno(aluno.id)}
-                  style={{ flex: 1, cursor: 'pointer' }}
+        <div className="turma-layout">
+          {/* Lista de alunos da turma */}
+          <section className="card">
+            <div className="section-header">
+              <h3>
+                Alunos da turma <span className="count-badge">{alunos.length}</span>
+              </h3>
+            </div>
+
+            {alunos.length === 0 ? (
+              <div className="empty-state">
+                <Icone nome="group" />
+                <p>Nenhum aluno cadastrado nesta turma.</p>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setModalAdicionarAberto(true)}
                 >
-                  <h4 style={{ margin: '0 0 5px 0', color: '#6b46c1' }}>{aluno.nome}</h4>
-                  {aluno.deficiencias && (
-                    <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
-                      <strong>Deficiências:</strong> {aluno.deficiencias}
-                    </p>
-                  )}
-                  <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#999' }}>
-                    Clique para ver detalhes
-                  </p>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => abrirModalEditar(aluno)}
-                    className="purple-button"
-                    style={{ height: '40px', fontSize: '13px', padding: '0 15px' }}
-                  >
-                    Editar
+                  <Icone nome="personAdd" />
+                  Adicionar aluno
+                </button>
+              </div>
+            ) : (
+              <div className="aluno-list">
+                {alunos.map((aluno) => {
+                  const defs = listarDeficiencias(aluno.deficiencias);
+                  return (
+                    <div key={aluno.id} className="aluno-item">
+                      <button
+                        type="button"
+                        className="aluno-item-main"
+                        onClick={() => handleVerAluno(aluno.id)}
+                        title="Ver detalhes do aluno"
+                      >
+                        <span className="avatar" aria-hidden="true">
+                          {aluno.nome?.trim().charAt(0).toUpperCase()}
+                        </span>
+                        <div style={{ minWidth: 0 }}>
+                          <h4>{aluno.nome}</h4>
+                          {defs.length > 0 && (
+                            <div className="chip-group">
+                              {defs.map((def) => (
+                                <span key={def} className="tag">
+                                  {def}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                      <div className="aluno-item-actions">
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          onClick={() => abrirModalEditar(aluno)}
+                          title="Editar"
+                          aria-label={`Editar ${aluno.nome}`}
+                        >
+                          <Icone nome="edit" />
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          onClick={() => handleRemoverAluno(aluno.id)}
+                          title="Remover da turma"
+                          aria-label={`Remover ${aluno.nome} da turma`}
+                        >
+                          <Icone nome="unlink" />
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-btn danger"
+                          onClick={() => handleExcluirAluno(aluno.id)}
+                          title="Excluir"
+                          aria-label={`Excluir ${aluno.nome}`}
+                        >
+                          <Icone nome="delete" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Informações da turma */}
+          <aside className="card">
+            {editando ? (
+              <div>
+                <h3 className="card-title">
+                  <Icone nome="edit" />
+                  Editando turma
+                </h3>
+                <label className="field">
+                  <span className="field-label">Nome</span>
+                  <input
+                    type="text"
+                    className="input"
+                    value={nomeEditado}
+                    onChange={(e) => setNomeEditado(e.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">Matéria</span>
+                  <input
+                    type="text"
+                    className="input"
+                    value={materiaEditada}
+                    onChange={(e) => setMateriaEditada(e.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">Descrição</span>
+                  <textarea
+                    className="textarea"
+                    value={descricaoEditada}
+                    onChange={(e) => setDescricaoEditada(e.target.value)}
+                  />
+                </label>
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-text" onClick={() => setEditando(false)}>
+                    Cancelar
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoverAluno(aluno.id)}
-                    className="gray-button"
-                    style={{ height: '40px', fontSize: '13px', padding: '0 15px' }}
-                  >
-                    Remover da turma
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleExcluirAluno(aluno.id)}
-                    className="dark-gray-button"
-                    style={{
-                      height: '40px',
-                      fontSize: '13px',
-                      padding: '0 15px',
-                      backgroundColor: '#dc2626',
-                      color: '#fff',
-                    }}
-                  >
-                    Excluir
+                  <button type="button" className="btn btn-primary" onClick={handleSalvar}>
+                    Salvar
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Informações da turma */}
-      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-        {editando ? (
-          <div>
-            <h3>Editando Turma</h3>
-            <label style={{ display: 'block', marginBottom: '15px' }}>
-              <h4>Nome:</h4>
-              <input
-                type="text"
-                value={nomeEditado}
-                onChange={(e) => setNomeEditado(e.target.value)}
-                style={{ width: '100%', padding: '8px' }}
-              />
-            </label>
-            <label style={{ display: 'block', marginBottom: '15px' }}>
-              <h4>Matéria:</h4>
-              <input
-                type="text"
-                value={materiaEditada}
-                onChange={(e) => setMateriaEditada(e.target.value)}
-                style={{ width: '100%', padding: '8px' }}
-              />
-            </label>
-            <label style={{ display: 'block', marginBottom: '15px' }}>
-              <h4>Descrição:</h4>
-              <textarea
-                value={descricaoEditada}
-                onChange={(e) => setDescricaoEditada(e.target.value)}
-                style={{ width: '100%', padding: '8px', height: '100px' }}
-              />
-            </label>
-            <button
-              type="button"
-              className="purple-button"
-              onClick={handleSalvar}
-              style={{ marginRight: '10px' }}
-            >
-              Salvar
-            </button>
-            <button
-              type="button"
-              className="gray-button"
-              onClick={() => setEditando(false)}
-            >
-              Cancelar
-            </button>
-          </div>
-        ) : (
-          <div>
-            <h3>Informações da Turma</h3>
-            <p>
-              <strong>Nome:</strong> {turma.nome}
-            </p>
-            {turma.materia && (
-              <p>
-                <strong>Matéria:</strong> {turma.materia}
-              </p>
+            ) : (
+              <div>
+                <h3 className="card-title">
+                  <Icone nome="info" />
+                  Informações da turma
+                </h3>
+                <dl className="info-list">
+                  <div>
+                    <dt>Nome</dt>
+                    <dd>{turma.nome}</dd>
+                  </div>
+                  {turma.materia && (
+                    <div>
+                      <dt>Matéria</dt>
+                      <dd>{turma.materia}</dd>
+                    </div>
+                  )}
+                  {turma.descricao && (
+                    <div>
+                      <dt>Descrição</dt>
+                      <dd>{turma.descricao}</dd>
+                    </div>
+                  )}
+                  {turma.plano_ensino && (
+                    <div>
+                      <dt>Plano de ensino</dt>
+                      <dd>{turma.plano_ensino}</dd>
+                    </div>
+                  )}
+                </dl>
+                <hr className="divider" />
+                <div className="side-actions">
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-block"
+                    onClick={() => setEditando(true)}
+                  >
+                    <Icone nome="edit" />
+                    Editar turma
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger-text btn-block"
+                    onClick={handleDeletarTurma}
+                  >
+                    <Icone nome="delete" />
+                    Deletar turma
+                  </button>
+                </div>
+              </div>
             )}
-            {turma.descricao && (
-              <p>
-                <strong>Descrição:</strong> {turma.descricao}
-              </p>
-            )}
-            {turma.plano_ensino && (
-              <p>
-                <strong>Plano de Ensino:</strong> {turma.plano_ensino}
-              </p>
-            )}
-            <br />
-            <button
-              type="button"
-              className="purple-button"
-              onClick={() => setEditando(true)}
-            >
-              Editar
-            </button>
-          </div>
-        )}
-      </div>
+          </aside>
+        </div>
+      </main>
 
       {/* Modal Adicionar Aluno */}
       {modalAdicionarAberto && (
-        <div style={modalStyles.overlay}>
-          <div style={modalStyles.modal}>
-            <h3 style={{ marginBottom: '15px', color: '#000' }}>Adicionar Aluno</h3>
-            <label style={modalStyles.label}>
-              Nome do Aluno:
-              <input
-                type="text"
-                value={nomeAluno}
-                onChange={(e) => {
-                  setNomeAluno(e.target.value);
-                  if (e.target.value.trim()) setErroNomeAluno('');
-                }}
-                style={modalStyles.input}
-              />
-            </label>
-            {erroNomeAluno && <p style={modalStyles.erroText}>{erroNomeAluno}</p>}
-            <label style={modalStyles.label}>
-              Deficiências:
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-                {deficienciasPredefinidas.map((def) => (
-                  <button
-                    key={def}
-                    type="button"
-                    onClick={() => handleToggleDeficiencia(def)}
-                    style={{
-                      padding: '6px 12px',
-                      border: '1px solid #6b46c1',
-                      borderRadius: '15px',
-                      backgroundColor: deficiencias.includes(def) ? '#6b46c1' : '#fff',
-                      color: deficiencias.includes(def) ? '#fff' : '#6b46c1',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                    }}
-                  >
-                    {def}
-                  </button>
-                ))}
-              </div>
-            </label>
-            <label style={modalStyles.label}>
-              Adicionar deficiência personalizada:
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                <input
-                  type="text"
-                  value={novaDeficiencia}
-                  onChange={(e) => setNovaDeficiencia(e.target.value)}
-                  style={{ ...modalStyles.input, flex: 1 }}
-                  placeholder="Digite a deficiência"
-                />
-                <button
-                  type="button"
-                  onClick={handleAdicionarDeficienciaPersonalizada}
-                  className="purple-button"
-                  style={{ height: '40px', fontSize: '13px' }}
-                >
-                  Adicionar
-                </button>
-              </div>
-            </label>
-            {deficiencias.length > 0 && (
-              <div style={{ marginTop: '10px' }}>
-                <p style={{ fontSize: '13px', color: '#666', marginBottom: '5px' }}>
-                  Selecionadas:
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                  {deficiencias.map((def) => (
-                    <span
-                      key={def}
-                      style={{
-                        backgroundColor: '#6b46c1',
-                        color: '#fff',
-                        padding: '4px 10px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                      }}
-                    >
-                      {def}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div style={modalStyles.buttonGroup}>
-              <button
-                type="button"
-                onClick={fecharModalAdicionar}
-                className="gray-button"
-                style={modalStyles.btnCancelar}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleAdicionarAluno}
-                disabled={botaoAdicionarDesabilitado}
-                className="purple-button"
-                style={{
-                  ...modalStyles.btnCriar,
-                  opacity: botaoAdicionarDesabilitado ? 0.5 : 1,
-                  cursor: botaoAdicionarDesabilitado ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Adicionar
-              </button>
-            </div>
+        <Modal titulo="Adicionar aluno" onClose={fecharModalAdicionar}>
+          <label className="field">
+            <span className="field-label">Nome do aluno *</span>
+            <input
+              type="text"
+              className={`input${erroNomeAluno ? ' has-error' : ''}`}
+              value={nomeAluno}
+              onChange={(e) => {
+                setNomeAluno(e.target.value);
+                if (e.target.value.trim()) setErroNomeAluno('');
+              }}
+            />
+            {erroNomeAluno && <span className="field-error">{erroNomeAluno}</span>}
+          </label>
+          <SeletorDeficiencias
+            predefinidas={deficienciasPredefinidas}
+            selecionadas={deficiencias}
+            onToggle={handleToggleDeficiencia}
+            novaDeficiencia={novaDeficiencia}
+            setNovaDeficiencia={setNovaDeficiencia}
+            onAdicionarPersonalizada={handleAdicionarDeficienciaPersonalizada}
+          />
+          <div className="modal-actions">
+            <button type="button" onClick={fecharModalAdicionar} className="btn btn-text">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleAdicionarAluno}
+              disabled={botaoAdicionarDesabilitado}
+              className="btn btn-primary"
+            >
+              Adicionar
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal Editar Aluno */}
       {modalEditarAberto && alunoEditando && (
-        <div style={modalStyles.overlay}>
-          <div style={modalStyles.modal}>
-            <h3 style={{ marginBottom: '15px', color: '#000' }}>Editar Aluno</h3>
-            <label style={modalStyles.label}>
-              Nome do Aluno:
-              <input
-                type="text"
-                value={nomeEditandoAluno}
-                onChange={(e) => {
-                  setNomeEditandoAluno(e.target.value);
-                  if (e.target.value.trim()) setErroNomeEditando('');
-                }}
-                style={modalStyles.input}
-              />
-            </label>
-            {erroNomeEditando && <p style={modalStyles.erroText}>{erroNomeEditando}</p>}
-
-            <label style={modalStyles.label}>
-              Deficiências:
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-                {deficienciasPredefinidas.map((def) => (
-                  <button
-                    key={def}
-                    type="button"
-                    onClick={() => handleToggleDeficienciaEditando(def)}
-                    style={{
-                      padding: '6px 12px',
-                      border: '1px solid #6b46c1',
-                      borderRadius: '15px',
-                      backgroundColor: deficienciasEditando.includes(def)
-                        ? '#6b46c1'
-                        : '#fff',
-                      color: deficienciasEditando.includes(def) ? '#fff' : '#6b46c1',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                    }}
-                  >
-                    {def}
-                  </button>
-                ))}
-              </div>
-            </label>
-
-            <label style={modalStyles.label}>
-              Adicionar deficiência personalizada:
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                <input
-                  type="text"
-                  value={novaDeficienciaEditando}
-                  onChange={(e) => setNovaDeficienciaEditando(e.target.value)}
-                  style={{ ...modalStyles.input, flex: 1 }}
-                  placeholder="Digite a deficiência"
-                />
-                <button
-                  type="button"
-                  onClick={handleAdicionarDeficienciaPersonalizadaEditando}
-                  className="purple-button"
-                  style={{ height: '40px', fontSize: '13px' }}
-                >
-                  Adicionar
-                </button>
-              </div>
-            </label>
-
-            {deficienciasEditando.length > 0 && (
-              <div style={{ marginTop: '10px' }}>
-                <p style={{ fontSize: '13px', color: '#666', marginBottom: '5px' }}>
-                  Selecionadas:
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                  {deficienciasEditando.map((def) => (
-                    <span
-                      key={def}
-                      style={{
-                        backgroundColor: '#6b46c1',
-                        color: '#fff',
-                        padding: '4px 10px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                      }}
-                    >
-                      {def}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div style={modalStyles.buttonGroup}>
-              <button
-                type="button"
-                onClick={fecharModalEditar}
-                className="gray-button"
-                style={modalStyles.btnCancelar}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleSalvarEdicaoAluno}
-                disabled={botaoEditarDesabilitado}
-                className="purple-button"
-                style={{
-                  ...modalStyles.btnCriar,
-                  opacity: botaoEditarDesabilitado ? 0.5 : 1,
-                  cursor: botaoEditarDesabilitado ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Salvar
-              </button>
-            </div>
+        <Modal titulo="Editar aluno" onClose={fecharModalEditar}>
+          <label className="field">
+            <span className="field-label">Nome do aluno *</span>
+            <input
+              type="text"
+              className={`input${erroNomeEditando ? ' has-error' : ''}`}
+              value={nomeEditandoAluno}
+              onChange={(e) => {
+                setNomeEditandoAluno(e.target.value);
+                if (e.target.value.trim()) setErroNomeEditando('');
+              }}
+            />
+            {erroNomeEditando && <span className="field-error">{erroNomeEditando}</span>}
+          </label>
+          <SeletorDeficiencias
+            predefinidas={deficienciasPredefinidas}
+            selecionadas={deficienciasEditando}
+            onToggle={handleToggleDeficienciaEditando}
+            novaDeficiencia={novaDeficienciaEditando}
+            setNovaDeficiencia={setNovaDeficienciaEditando}
+            onAdicionarPersonalizada={handleAdicionarDeficienciaPersonalizadaEditando}
+          />
+          <div className="modal-actions">
+            <button type="button" onClick={fecharModalEditar} className="btn btn-text">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSalvarEdicaoAluno}
+              disabled={botaoEditarDesabilitado}
+              className="btn btn-primary"
+            >
+              Salvar
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal Upload Lista PCD */}
       {modalListaPCDAberto && (
-        <div style={modalStyles.overlay}>
-          <div style={modalStyles.modal}>
-            <h3 style={{ marginBottom: '15px', color: '#000' }}>Upload Lista de Alunos PCD</h3>
-            <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
-              Envie uma lista de alunos PCD para cadastro automático.
-            </p>
-            <label style={modalStyles.label}>
-              Arquivo:
-              <input
-                type="file"
-                accept=".pdf,.docx,.pptx,.xlsx,.csv"
-                onChange={(e) => setArquivoPCD(e.target.files[0])}
-                style={{ ...modalStyles.input, padding: '8px' }}
-              />
-            </label>
-            <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-              Formatos permitidos: PDF, DOCX, PPTX, XLSX, CSV
-            </p>
-            <div style={modalStyles.buttonGroup}>
-              <button
-                type="button"
-                onClick={() => {
-                  setModalListaPCDAberto(false);
-                  setArquivoPCD(null);
-                }}
-                className="gray-button"
-                style={modalStyles.btnCancelar}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleUploadPCD}
-                disabled={!arquivoPCD || processandoPCD}
-                className="purple-button"
-                style={{
-                  ...modalStyles.btnCriar,
-                  opacity: !arquivoPCD || processandoPCD ? 0.5 : 1,
-                  cursor: !arquivoPCD || processandoPCD ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {processandoPCD ? 'Processando...' : 'Enviar'}
-              </button>
-            </div>
+        <Modal
+          titulo="Upload da lista de alunos PCD"
+          descricao="Envie uma lista de alunos PCD para cadastro automático."
+          onClose={() => {
+            setModalListaPCDAberto(false);
+            setArquivoPCD(null);
+          }}
+        >
+          <label className="field">
+            <span className="field-label">Arquivo</span>
+            <input
+              type="file"
+              className="file-input"
+              accept=".pdf,.docx,.pptx,.xlsx,.csv"
+              onChange={(e) => setArquivoPCD(e.target.files[0])}
+            />
+            <span className="field-hint">Formatos permitidos: PDF, DOCX, PPTX, XLSX, CSV</span>
+          </label>
+          <div className="modal-actions">
+            <button
+              type="button"
+              onClick={() => {
+                setModalListaPCDAberto(false);
+                setArquivoPCD(null);
+              }}
+              className="btn btn-text"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleUploadPCD}
+              disabled={!arquivoPCD || processandoPCD}
+              className="btn btn-primary"
+            >
+              <Icone nome="upload" />
+              {processandoPCD ? 'Processando...' : 'Enviar'}
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal Adicionar Aluno Já Cadastrado */}
       {modalAdicionarExistenteAberto && (
-        <div style={modalStyles.overlay}>
-          <div style={{ ...modalStyles.modal, width: '500px' }}>
-            <h3 style={{ marginBottom: '15px', color: '#000' }}>
-              Adicionar Aluno Já Cadastrado
-            </h3>
-            {todosAlunos.length === 0 ? (
-              <p style={{ color: '#666' }}>Nenhum aluno cadastrado no sistema.</p>
-            ) : (
-              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                {todosAlunos
-                  .filter((aluno) => !alunos.find((a) => a.id === aluno.id))
-                  .map((aluno) => (
-                    <div
-                      key={aluno.id}
-                      style={{
-                        border: '1px solid #ddd',
-                        borderRadius: '6px',
-                        padding: '12px',
-                        marginBottom: '10px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <div>
-                        <h4 style={{ margin: '0 0 5px 0', color: '#6b46c1' }}>
-                          {aluno.nome}
-                        </h4>
-                        {aluno.deficiencias && (
-                          <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>
-                            {aluno.deficiencias}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleVincularAlunoExistente(aluno.id)}
-                        className="purple-button"
-                        style={{ height: '35px', fontSize: '13px', padding: '0 15px' }}
-                      >
-                        Adicionar
-                      </button>
+        <Modal
+          titulo="Adicionar aluno já cadastrado"
+          descricao="Vincule a esta turma um aluno que já está em outra turma sua."
+          onClose={() => setModalAdicionarExistenteAberto(false)}
+          wide
+        >
+          {todosAlunos.length === 0 ? (
+            <p className="muted">Nenhum aluno cadastrado no sistema.</p>
+          ) : alunosDisponiveis.length === 0 ? (
+            <p className="muted" style={{ textAlign: 'center' }}>
+              Todos os alunos já estão nesta turma.
+            </p>
+          ) : (
+            <div className="select-list">
+              {alunosDisponiveis.map((aluno) => (
+                <div key={aluno.id} className="select-item">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                    <span className="avatar" aria-hidden="true">
+                      {aluno.nome?.trim().charAt(0).toUpperCase()}
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <h4>{aluno.nome}</h4>
+                      {aluno.deficiencias && <p>{aluno.deficiencias}</p>}
                     </div>
-                  ))}
-                {todosAlunos.filter((a) => !alunos.find((x) => x.id === a.id)).length ===
-                  0 && (
-                  <p style={{ color: '#666', textAlign: 'center' }}>
-                    Todos os alunos já estão nesta turma.
-                  </p>
-                )}
-              </div>
-            )}
-            <div style={modalStyles.buttonGroup}>
-              <button
-                type="button"
-                onClick={() => setModalAdicionarExistenteAberto(false)}
-                className="gray-button"
-                style={{ ...modalStyles.btnCancelar, width: '100%' }}
-              >
-                Fechar
-              </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleVincularAlunoExistente(aluno.id)}
+                    className="btn btn-tonal btn-sm"
+                  >
+                    <Icone nome="add" />
+                    Adicionar
+                  </button>
+                </div>
+              ))}
             </div>
+          )}
+          <div className="modal-actions">
+            <button
+              type="button"
+              onClick={() => setModalAdicionarExistenteAberto(false)}
+              className="btn btn-outline"
+            >
+              Fechar
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
-    </div>
+    </>
   );
 }
 
-const modalStyles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  modal: {
-    backgroundColor: '#ffffff',
-    padding: '25px',
-    borderRadius: '8px',
-    width: '450px',
-    maxWidth: '90%',
-    color: '#000000',
-    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-    maxHeight: '90vh',
-    overflowY: 'auto',
-  },
-  label: {
-    display: 'block',
-    marginTop: '10px',
-    textAlign: 'left',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  input: {
-    width: '100%',
-    padding: '8px',
-    marginTop: '5px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    boxSizing: 'border-box',
-    backgroundColor: '#ffffff',
-    color: '#000000',
-  },
-  erroText: {
-    color: 'red',
-    fontSize: '12px',
-    marginTop: '4px',
-    textAlign: 'left',
-  },
-  buttonGroup: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: '20px',
-    gap: '10px',
-  },
-  btnCancelar: {
-    width: '130px',
-    height: '45px',
-    fontSize: '15px',
-    padding: '0 10px',
-    boxSizing: 'border-box',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnCriar: {
-    width: '130px',
-    height: '45px',
-    fontSize: '15px',
-    padding: '0 10px',
-    boxSizing: 'border-box',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-};
+/** Converte o campo de deficiências (string "a, b" ou array) em array. */
+function listarDeficiencias(valor) {
+  if (Array.isArray(valor)) return valor;
+  if (typeof valor === 'string' && valor.trim()) {
+    return valor.split(',').map((d) => d.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+/**
+ * Seleção de deficiências com chips (estilo filter chip do Material 3)
+ * + campo para adicionar uma deficiência personalizada.
+ */
+function SeletorDeficiencias({
+  predefinidas,
+  selecionadas,
+  onToggle,
+  novaDeficiencia,
+  setNovaDeficiencia,
+  onAdicionarPersonalizada,
+}) {
+  const personalizadas = selecionadas.filter((d) => !predefinidas.includes(d));
+
+  return (
+    <>
+      <div className="field">
+        <span className="field-label">Deficiências</span>
+        <div className="chip-group">
+          {[...predefinidas, ...personalizadas].map((def) => {
+            const ativa = selecionadas.includes(def);
+            return (
+              <button
+                key={def}
+                type="button"
+                className={`chip${ativa ? ' selected' : ''}`}
+                aria-pressed={ativa}
+                onClick={() => onToggle(def)}
+              >
+                {ativa && <Icone nome="check" />}
+                {def}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="field">
+        <span className="field-label">Adicionar deficiência personalizada</span>
+        <div className="inline-add">
+          <input
+            type="text"
+            className="input"
+            value={novaDeficiencia}
+            onChange={(e) => setNovaDeficiencia(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                onAdicionarPersonalizada();
+              }
+            }}
+            placeholder="Digite a deficiência"
+          />
+          <button type="button" onClick={onAdicionarPersonalizada} className="btn btn-tonal">
+            <Icone nome="add" />
+            Adicionar
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}

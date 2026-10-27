@@ -1,8 +1,9 @@
-import logo from '../assets/logo.png';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import { headersAuth } from '../utils/auth';
+import Icone from '../components/Icone';
+import Carregando from '../components/Carregando';
 import '../App.css';
 
 export default function Aluno() {
@@ -217,9 +218,9 @@ export default function Aluno() {
   };
 
   const engajamentoCor = (v) => {
-    if (v >= 70) return '#4ade80';
-    if (v >= 40) return '#fbbf24';
-    return '#f87171';
+    if (v >= 70) return '#22a06b';
+    if (v >= 40) return '#f5a524';
+    return '#e5484d';
   };
 
   const deficienciasLista = (() => {
@@ -232,21 +233,24 @@ export default function Aluno() {
 
   if (!aluno) {
     return (
-      <div>
+      <>
         <Header />
-        <section id="center">
-          <div className="logo">
-            <img src={logo} className="base" width="200" height="200" alt="" />
-          </div>
-          {mensagem ? (
-            <p style={{ color: 'red', fontWeight: 'bold' }}>{mensagem}</p>
-          ) : (
-            <p>Carregando...</p>
-          )}
-        </section>
-      </div>
+        {mensagem ? (
+          <main className="page page-narrow">
+            <button type="button" className="back-link" onClick={handleVoltar}>
+              <Icone nome="arrowBack" />
+              Voltar
+            </button>
+            <p className="alert alert-error">{mensagem}</p>
+          </main>
+        ) : (
+          <Carregando />
+        )}
+      </>
     );
   }
+
+  const iniciais = aluno.nome?.trim().charAt(0).toUpperCase();
 
   // ============================================
   // Sem turma selecionada → usuário escolhe
@@ -254,365 +258,282 @@ export default function Aluno() {
   if (!turmaSelecionada) {
     const vinculos = aluno.vinculos || [];
     return (
-      <div>
+      <>
         <Header />
-        <section id="center">
-          <div className="logo">
-            <img src={logo} className="base" width="200" height="200" alt="" />
+        <main className="page page-narrow">
+          <button type="button" className="back-link" onClick={handleVoltar}>
+            <Icone nome="arrowBack" />
+            Voltar
+          </button>
+
+          <div className="aluno-header">
+            <span className="avatar" aria-hidden="true">
+              {iniciais}
+            </span>
+            <div className="aluno-header-info">
+              <h1>Selecione uma turma</h1>
+              <p className="muted" style={{ marginTop: 6 }}>
+                As informações e observações de <strong>{aluno.nome}</strong> são específicas por
+                turma.
+              </p>
+            </div>
           </div>
-          <h2>Selecione uma turma</h2>
-          <p style={{ color: '#666' }}>
-            As informações e observações deste aluno são específicas por turma.
-          </p>
-          <br />
+
           {vinculos.length === 0 ? (
-            <p style={{ color: '#666' }}>Este aluno não está em nenhuma das suas turmas.</p>
+            <div className="empty-state">
+              <Icone nome="school" />
+              <p>Este aluno não está em nenhuma das suas turmas.</p>
+            </div>
           ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+            <div className="turma-select-grid">
               {vinculos.map((v) => (
                 <button
                   key={v.turma_id}
                   type="button"
-                  className="purple-button"
-                  style={{ width: '250px', height: '75px' }}
+                  className="turma-card"
+                  style={{ minHeight: 120 }}
                   onClick={() => setTurmaSelecionada(v.turma_id)}
                 >
-                  {v.turma_nome}
+                  <span className="turma-card-icon">
+                    <Icone nome="school" />
+                  </span>
+                  <h3>{v.turma_nome}</h3>
+                  <span className="open-hint">
+                    Ver nesta turma
+                    <Icone nome="arrowForward" />
+                  </span>
                 </button>
               ))}
             </div>
           )}
-          <br />
-          <button
-            type="button"
-            className="gray-button"
-            style={{ width: '150px', height: '60px' }}
-            onClick={handleVoltar}
-          >
-            Voltar
-          </button>
-        </section>
-      </div>
+        </main>
+      </>
     );
   }
 
   // ============================================
   // Turma selecionada → tela completa
   // ============================================
+  const statusEngajamento =
+    engajamento >= 70
+      ? { texto: 'Aluno altamente engajado', bg: 'var(--success-container)', fg: 'var(--success)' }
+      : engajamento >= 40
+      ? { texto: 'Aluno com engajamento moderado', bg: 'var(--warning-container)', fg: 'var(--warning)' }
+      : { texto: 'Aluno precisa de mais atenção', bg: 'var(--danger-container)', fg: 'var(--danger)' };
+
+  const mensagemSucesso = mensagem.includes('sucesso');
+
   return (
-    <div>
+    <>
       <Header />
 
-      <section id="center">
-        <div className="logo">
-          <img src={logo} className="base" width="200" height="200" alt="" />
-        </div>
-        <div>
-          <h2>Perfil do Aluno</h2>
-          {aluno.turma_nome && (
-            <p style={{ color: '#6b46c1', fontWeight: 'bold' }}>
-              Turma: {aluno.turma_nome}
-            </p>
-          )}
-          <br />
-          <button
-            style={{ width: '150px', height: '75px' }}
-            type="button"
-            className="gray-button"
-            onClick={handleVoltar}
-          >
-            Voltar
-          </button>
-        </div>
-      </section>
+      <main className="page">
+        <button type="button" className="back-link" onClick={handleVoltar}>
+          <Icone nome="arrowBack" />
+          {aluno.turma_nome ? `Voltar para ${aluno.turma_nome}` : 'Voltar'}
+        </button>
 
-      <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto' }}>
-        {/* Informações básicas */}
-        <div
-          style={{
-            backgroundColor: '#fff',
-            border: '2px solid #6b46c1',
-            borderRadius: '8px',
-            padding: '25px',
-            marginBottom: '20px',
-          }}
-        >
-          <h3 style={{ color: '#6b46c1', marginTop: 0 }}>Informações do Aluno</h3>
-
-          <div style={{ marginBottom: '15px' }}>
-            <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>Nome:</h4>
-            <p style={{ margin: 0, fontSize: '16px' }}>{aluno.nome}</p>
-          </div>
-
-          {deficienciasLista.length > 0 && (
-            <div style={{ marginBottom: '15px' }}>
-              <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>Deficiência(s):</h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div className="aluno-header">
+          <span className="avatar" aria-hidden="true">
+            {iniciais}
+          </span>
+          <div className="aluno-header-info">
+            <span className="eyebrow">
+              Perfil do aluno{aluno.turma_nome ? ` · ${aluno.turma_nome}` : ''}
+            </span>
+            <h1>{aluno.nome}</h1>
+            {deficienciasLista.length > 0 && (
+              <div className="chip-group">
                 {deficienciasLista.map((def, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      backgroundColor: '#6b46c1',
-                      color: '#fff',
-                      padding: '6px 12px',
-                      borderRadius: '15px',
-                      fontSize: '14px',
-                    }}
-                  >
+                  <span key={index} className="tag">
                     {def}
                   </span>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
 
-          {/* Engajamento por turma (editável) */}
-          <div style={{ marginBottom: '15px' }}>
-            <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>
-              Nível de Engajamento (nesta turma): {Number(engajamento).toFixed(1)}%
-            </h4>
-            <div
-              style={{
-                width: '100%',
-                height: '30px',
-                backgroundColor: '#e5e7eb',
-                borderRadius: '15px',
-                overflow: 'hidden',
-                position: 'relative',
-              }}
-            >
+        <div className="aluno-grid">
+          <div>
+            {/* Engajamento por turma (editável) */}
+            <section className="card">
+              <h3 className="card-title">
+                <Icone nome="insights" />
+                Nível de engajamento
+              </h3>
+              <div className="engajamento-valor">
+                <strong>{Number(engajamento).toFixed(0)}%</strong>
+                <span className="muted">nesta turma</span>
+              </div>
               <div
-                style={{
-                  width: `${engajamento}%`,
-                  height: '100%',
-                  backgroundColor: engajamentoCor(engajamento),
-                  transition: 'width 0.5s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: engajamento > 50 ? '#fff' : '#333',
-                  fontWeight: 'bold',
-                  fontSize: '14px',
-                }}
+                className="progress"
+                role="progressbar"
+                aria-valuenow={Number(engajamento)}
+                aria-valuemin={0}
+                aria-valuemax={100}
               >
-                {engajamento > 10 && `${Number(engajamento).toFixed(0)}%`}
+                <div
+                  className="progress-bar"
+                  style={{ width: `${engajamento}%`, backgroundColor: engajamentoCor(engajamento) }}
+                />
+              </div>
+              <span
+                className="status-pill"
+                style={{ background: statusEngajamento.bg, color: statusEngajamento.fg }}
+              >
+                {statusEngajamento.texto}
+              </span>
+
+              {/* Slider para ajustar */}
+              <div className="engajamento-controle">
+                <input
+                  type="range"
+                  className="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={engajamento}
+                  onChange={(e) => setEngajamento(Number(e.target.value))}
+                  aria-label="Ajustar engajamento"
+                />
+                <button
+                  type="button"
+                  onClick={handleSalvarEngajamento}
+                  disabled={salvandoEngajamento}
+                  className="btn btn-tonal btn-sm"
+                >
+                  {salvandoEngajamento ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+            </section>
+
+            {/* Botão sugerir atividades */}
+            <section className="card sugestao-card">
+              <h3 className="card-title">
+                <Icone nome="sparkle" style={{ color: '#fff' }} />
+                Atividades adaptadas
+              </h3>
+              <p>Sugira atividades baseadas nas deficiências e observações do aluno.</p>
+              <button type="button" onClick={handleSugerirAtividades} className="btn btn-block">
+                <Icone nome="sparkle" />
+                Sugerir atividades
+              </button>
+            </section>
+          </div>
+
+          {/* Observações do professor */}
+          <section className="card">
+            <h3 className="card-title">
+              <Icone nome="notes" />
+              Minhas observações
+            </h3>
+
+            {/* Adicionar nova observação */}
+            <div className="obs-form">
+              <textarea
+                className="textarea"
+                value={novaObservacao}
+                onChange={(e) => setNovaObservacao(e.target.value)}
+                placeholder="Adicione uma nova observação sobre o desempenho do aluno..."
+                aria-label="Nova observação"
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={handleSalvarObservacao}
+                  disabled={salvando}
+                  className="btn btn-primary"
+                >
+                  <Icone nome="add" />
+                  {salvando ? 'Salvando...' : 'Adicionar observação'}
+                </button>
               </div>
             </div>
-            <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-              {engajamento >= 70
-                ? 'Aluno altamente engajado'
-                : engajamento >= 40
-                ? 'Aluno com engajamento moderado'
-                : 'Aluno precisa de mais atenção'}
-            </p>
 
-            {/* Slider para ajustar */}
-            <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={engajamento}
-                onChange={(e) => setEngajamento(Number(e.target.value))}
-                style={{ flex: 1 }}
-              />
-              <button
-                type="button"
-                onClick={handleSalvarEngajamento}
-                disabled={salvandoEngajamento}
-                className="purple-button"
-                style={{
-                  height: '40px',
-                  fontSize: '13px',
-                  padding: '0 15px',
-                  opacity: salvandoEngajamento ? 0.6 : 1,
-                  cursor: salvandoEngajamento ? 'not-allowed' : 'pointer',
-                }}
+            {mensagem && (
+              <p
+                className={`alert ${mensagemSucesso ? 'alert-success' : 'alert-error'}`}
+                style={{ marginTop: 16 }}
               >
-                {salvandoEngajamento ? 'Salvando...' : 'Salvar'}
-              </button>
-            </div>
-          </div>
-        </div>
+                {mensagem}
+              </p>
+            )}
 
-        {/* Observações do professor */}
-        <div
-          style={{
-            backgroundColor: '#fff',
-            border: '2px solid #6b46c1',
-            borderRadius: '8px',
-            padding: '25px',
-            marginBottom: '20px',
-          }}
-        >
-          <h3 style={{ color: '#6b46c1', marginTop: 0 }}>Minhas Observações</h3>
-
-          {/* Adicionar nova observação */}
-          <div style={{ marginBottom: '20px' }}>
-            <textarea
-              value={novaObservacao}
-              onChange={(e) => setNovaObservacao(e.target.value)}
-              placeholder="Adicione uma nova observação sobre o desempenho do aluno..."
-              style={{
-                width: '100%',
-                height: '100px',
-                padding: '12px',
-                borderRadius: '6px',
-                border: '1px solid #ccc',
-                fontSize: '14px',
-                resize: 'vertical',
-                boxSizing: 'border-box',
-              }}
-            />
-            <button
-              type="button"
-              onClick={handleSalvarObservacao}
-              disabled={salvando}
-              className="purple-button"
-              style={{
-                marginTop: '10px',
-                opacity: salvando ? 0.6 : 1,
-                cursor: salvando ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {salvando ? 'Salvando...' : 'Adicionar Observação'}
-            </button>
-          </div>
-
-          {mensagem && (
-            <p
-              style={{
-                color: mensagem.includes('sucesso') ? '#4ade80' : '#f87171',
-                fontWeight: 'bold',
-                marginBottom: '15px',
-              }}
-            >
-              {mensagem}
-            </p>
-          )}
-
-          {/* Lista de observações */}
-          {observacoes.length === 0 ? (
-            <p style={{ color: '#666', textAlign: 'center' }}>
-              Você ainda não registrou nenhuma observação sobre este aluno nesta turma.
-            </p>
-          ) : (
-            <div style={{ display: 'grid', gap: '15px' }}>
-              {observacoes.map((obs) => (
-                <div
-                  key={obs.id}
-                  style={{
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    padding: '15px',
-                    backgroundColor: '#f9f9f9',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>
-                      <strong>Criada em:</strong> {obs.data_criacao}
-                      {obs.data_edicao && (
-                        <span style={{ marginLeft: '10px' }}>
-                          <strong>Editada em:</strong> {obs.data_edicao}
-                        </span>
+            {/* Lista de observações */}
+            {observacoes.length === 0 ? (
+              <div className="empty-state" style={{ marginTop: 20 }}>
+                <Icone nome="notes" />
+                <p>Você ainda não registrou nenhuma observação sobre este aluno nesta turma.</p>
+              </div>
+            ) : (
+              <div className="obs-list">
+                {observacoes.map((obs) => (
+                  <article key={obs.id} className="obs-item">
+                    <div className="obs-item-header">
+                      <p className="obs-meta">
+                        Criada em {obs.data_criacao}
+                        {obs.data_edicao && <> · Editada em {obs.data_edicao}</>}
+                      </p>
+                      {editandoId !== obs.id && (
+                        <div style={{ display: 'flex' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleEditarObservacao(obs)}
+                            className="icon-btn"
+                            title="Editar"
+                            aria-label="Editar observação"
+                          >
+                            <Icone nome="edit" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletarObservacao(obs.id)}
+                            className="icon-btn danger"
+                            title="Excluir"
+                            aria-label="Excluir observação"
+                          >
+                            <Icone nome="delete" />
+                          </button>
+                        </div>
                       )}
-                    </p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleEditarObservacao(obs)}
-                        className="purple-button"
-                        style={{ height: '30px', fontSize: '12px', padding: '0 12px' }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeletarObservacao(obs.id)}
-                        className="dark-gray-button"
-                        style={{ height: '30px', fontSize: '12px', padding: '0 12px' }}
-                      >
-                        Excluir
-                      </button>
                     </div>
-                  </div>
-                  {editandoId === obs.id ? (
-                    <div>
-                      <textarea
-                        value={textoEditado}
-                        onChange={(e) => setTextoEditado(e.target.value)}
-                        style={{
-                          width: '100%',
-                          height: '80px',
-                          padding: '10px',
-                          borderRadius: '4px',
-                          border: '1px solid #ccc',
-                          fontSize: '14px',
-                          resize: 'vertical',
-                          boxSizing: 'border-box',
-                        }}
-                      />
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleSalvarEdicao(obs.id)}
-                          disabled={salvando}
-                          className="purple-button"
-                          style={{ height: '30px', fontSize: '12px', padding: '0 12px' }}
-                        >
-                          Salvar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleCancelarEdicao}
-                          className="gray-button"
-                          style={{ height: '30px', fontSize: '12px', padding: '0 12px' }}
-                        >
-                          Cancelar
-                        </button>
+                    {editandoId === obs.id ? (
+                      <div>
+                        <textarea
+                          className="textarea"
+                          value={textoEditado}
+                          onChange={(e) => setTextoEditado(e.target.value)}
+                          aria-label="Editar observação"
+                        />
+                        <div className="obs-edit-actions">
+                          <button
+                            type="button"
+                            onClick={handleCancelarEdicao}
+                            className="btn btn-text btn-sm"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSalvarEdicao(obs.id)}
+                            disabled={salvando}
+                            className="btn btn-primary btn-sm"
+                          >
+                            Salvar
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: '14px',
-                        color: '#333',
-                        whiteSpace: 'pre-wrap',
-                      }}
-                    >
-                      {obs.texto}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                    ) : (
+                      <p className="obs-texto">{obs.texto}</p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
-
-        {/* Botão sugerir atividades */}
-        <div style={{ textAlign: 'center' }}>
-          <button
-            type="button"
-            onClick={handleSugerirAtividades}
-            className="purple-button"
-            style={{ width: '300px', height: '75px', fontSize: '16px' }}
-          >
-            Sugerir Atividades Adaptadas
-          </button>
-          <p style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>
-            Sugira atividades baseadas nas deficiências e observações do aluno
-          </p>
-        </div>
-      </div>
-    </div>
+      </main>
+    </>
   );
 }
