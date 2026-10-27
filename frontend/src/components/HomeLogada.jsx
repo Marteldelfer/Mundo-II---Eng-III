@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { headersAuth } from '../utils/auth';
 import Landing from '../pages/landing';
+import Carregando from './Carregando';
 
 /**
  * Decide o destino da rota /landing:
@@ -34,7 +35,7 @@ export default function HomeLogada() {
   }, []);
 
   if (status === 'carregando') {
-    return <p style={{ textAlign: 'center', marginTop: '50px' }}>Carregando...</p>;
+    return <Carregando />;
   }
 
   if (status === 'tem') {

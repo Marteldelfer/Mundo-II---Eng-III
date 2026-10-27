@@ -1,4 +1,6 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import logo from '../assets/logo.png';
+import Icone from './Icone';
 import { obterUsuario, logout } from '../utils/auth';
 
 /**
@@ -8,6 +10,8 @@ import { obterUsuario, logout } from '../utils/auth';
 export default function Header() {
   const usuario = obterUsuario();
   const navigate = useNavigate();
+  const nome = usuario?.nome || 'usuário';
+  const inicial = nome.trim().charAt(0).toUpperCase() || 'U';
 
   const handleLogout = () => {
     logout();
@@ -15,26 +19,29 @@ export default function Header() {
   };
 
   return (
-    <header
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '10px 20px',
-        borderBottom: '1px solid #ddd',
-      }}
-    >
-      <span style={{ fontWeight: 'bold' }}>
-        Olá, {usuario?.nome || 'usuário'}
-      </span>
-      <button
-        type="button"
-        className="gray-button"
-        style={{ width: '120px', height: '40px' }}
-        onClick={handleLogout}
-      >
-        Sair
-      </button>
+    <header className="topbar">
+      <div className="topbar-inner">
+        <Link to="/landing" className="brand" aria-label="AdaptEd — início">
+          <img src={logo} alt="" />
+          <span>
+            adapt<em>Ed</em>
+          </span>
+        </Link>
+
+        <div className="topbar-user">
+          <div className="topbar-greeting">
+            <small>Olá,</small>
+            <strong>{nome}</strong>
+          </div>
+          <span className="avatar" aria-hidden="true">
+            {inicial}
+          </span>
+          <button type="button" className="btn btn-outline btn-sm" onClick={handleLogout}>
+            <Icone nome="logout" />
+            Sair
+          </button>
+        </div>
+      </div>
     </header>
   );
 }
