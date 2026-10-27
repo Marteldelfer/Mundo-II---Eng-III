@@ -1,59 +1,36 @@
-import logo from '../assets/logo.png'
-import '../App.css'
+import logo from '../assets/logo.png';
+import '../App.css';
 
 export default function CadastrarTurma() {
   return (
-    <div>
-    <section id="center" style={{gap: '0px'}}>
-                  <div className="logo">
-                    <img src={logo} className="base" width="200" height="200" alt="" />
-                  </div>
-
-                  <form style={{width: '75%'}}>
-      
-                    
-                  
-
-                  <div style={{display: 'flex', gap: '20px'}}>
-                    <label style={{width: '100%'}}>
-                      <h4 style={{marginBottom: '8px', marginTop: '0px'}}>Nome da turma:</h4>
-                      <input 
-                        type="text"                        
-                        required 
-                      />
-                    </label>
-                    <label style={{width: '100%'}}>
-                      <h4 style={{marginBottom: '8px', marginTop: '0px'}}>Disciplina:</h4>
-                      <input 
-                        type="text"                        
-                        required 
-                      />
-                    </label>
-
-                    </div>
-                    <label style={{width: '100%'}}>
-                      <h4 style={{marginBottom: '8px', marginTop: '0px'}}>Descrição da Disciplina:</h4>
-                      <input 
-                        type="text"                        
-                        style={{height: '120px'}}
-                      />
-                    </label>
-                    <div style={{width: '100%', display: 'flex', justifyContent: 'space-between', marginTop: '20px'}}>
-                      <button
-                      style={{width: '40%', height: '75px', marginBottom:'0px'}}
-                      type="button"
-                      className="dark-gray-button"
-                      >Criar</button>
-                      <button
-                      style={{width: '40%', height: '75px', marginBottom:'0px'}}
-                      type="button"
-                      className="gray-button"
-                      >Cancelar</button>
-                    </div>
-                  </form>
-                  
-                  
-                </section>
-    </div>
+    <main className="page page-narrow">
+      <div className="card">
+        <img src={logo} alt="" style={{ display: 'block', width: 96, height: 96, margin: '0 auto 16px' }} />
+        <form>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+            <label className="field">
+              <span className="field-label">Nome da turma</span>
+              <input className="input" type="text" required />
+            </label>
+            <label className="field" style={{ marginTop: 0 }}>
+              <span className="field-label">Disciplina</span>
+              <input className="input" type="text" required />
+            </label>
+          </div>
+          <label className="field" style={{ marginTop: 16 }}>
+            <span className="field-label">Descrição da disciplina</span>
+            <textarea className="textarea" style={{ minHeight: 120 }} />
+          </label>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-text">
+              Cancelar
+            </button>
+            <button type="button" className="btn btn-primary">
+              Criar
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
   );
 }
