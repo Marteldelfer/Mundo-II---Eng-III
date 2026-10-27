@@ -1,4 +1,4 @@
-"""
+﻿"""
 Módulo de autenticação JWT.
 Responsável por gerar, verificar tokens e fornecer o usuário atual via Depends.
 """
@@ -22,7 +22,7 @@ if not SECRET_KEY:
     # Em produção, defina SECRET_KEY no .env — se não estiver lá, o app avisa.
     SECRET_KEY = "dev-only-insecure-key-change-me"
     print(
-        "⚠️  [auth.py] SECRET_KEY não encontrada no ambiente. "
+        "[AVISO] [auth.py] SECRET_KEY não encontrada no ambiente. "
         "Usando valor de desenvolvimento. NÃO USE EM PRODUÇÃO."
     )
 
