@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import AuthLayout from '../components/AuthLayout';
 import { salvarAutenticacao } from '../utils/auth';
 import '../App.css';
 
@@ -41,40 +42,57 @@ export default function Login() {
     }
   };
 
+  // FastAPI pode devolver um objeto de validação em vez de string
+  const textoMensagem = typeof mensagem === 'string' ? mensagem : mensagem?.msg;
+
   return (
-    <div>
-      <section id="center">
-        <div className="logo">
-          <img src={logo} className="base" width="200" height="200" alt="" />
-        </div>
-        <form style={{ width: '75%' }} onSubmit={handleSubmit}>
-          <label>
-            <h4 style={{ marginBottom: '8px' }}>E-mail:</h4>
+    <AuthLayout>
+      <div className="auth-card">
+        <Link to="/" aria-label="Voltar ao início">
+          <img src={logo} className="auth-logo" alt="AdaptEd" />
+        </Link>
+        <h1>Entrar</h1>
+        <p className="subtitle">Que bom ter você de volta!</p>
+
+        <form onSubmit={handleSubmit}>
+          <label className="field">
+            <span className="field-label">E-mail</span>
             <input
+              className="input"
               type="email"
               name="email"
+              autoComplete="email"
+              placeholder="seuemail@escola.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </label>
-          <label>
-            <h4 style={{ marginBottom: '8px' }}>Senha:</h4>
+          <label className="field">
+            <span className="field-label">Senha</span>
             <input
+              className="input"
               type="password"
               name="password"
+              autoComplete="current-password"
+              placeholder="Digite sua senha"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
             />
           </label>
-          <h4 style={{ marginBottom: '8px' }}>
-            Não possui uma conta? <Link to="/cadastro">Criar conta</Link>
-          </h4>
-          <input type="submit" value="Entrar" className="dark-gray-button" />
+
+          {textoMensagem && <p className="alert alert-error">{textoMensagem}</p>}
+
+          <button type="submit" className="btn btn-primary btn-lg btn-block">
+            Entrar
+          </button>
         </form>
-      </section>
-      {mensagem && <p style={{ color: 'red', fontWeight: 'bold' }}>{mensagem}</p>}
-    </div>
+
+        <p className="auth-switch">
+          Não possui uma conta? <Link to="/cadastro">Criar conta</Link>
+        </p>
+      </div>
+    </AuthLayout>
   );
 }

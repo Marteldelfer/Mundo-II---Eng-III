@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
-import logo from './assets/logo.png';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Inicio from './pages/inicio';
 import Cadastro from './pages/cadastro';
 import Login from './pages/login';
 import HomeLogada from './components/HomeLogada';
@@ -25,42 +25,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <section id="center">
-                <div className="logo">
-                  <img src={logo} className="base" width="200" height="200" alt="" />
-                </div>
-                <div>
-                  <h1>Bem vindo ao AdaptEd.</h1>
-                  <h2>A inclusão na sua sala de aula começa com um clique.</h2>
-                </div>
-                <div style={{ display: 'flex', gap: '20px' }}>
-                  <Link to="/cadastro">
-                    <button
-                      style={{ width: '300px', height: '75px' }}
-                      type="button"
-                      className="dark-gray-button"
-                    >
-                      Criar conta
-                    </button>
-                  </Link>
-                  <Link to="/login">
-                    <button
-                      style={{ width: '300px', height: '75px' }}
-                      type="button"
-                      className="gray-button"
-                    >
-                      Entrar
-                    </button>
-                  </Link>
-                </div>
-              </section>
-            </>
-          }
-        />
+        <Route path="/" element={<Inicio />} />
 
         {/* Rotas públicas — se logado, redireciona para /landing */}
         <Route

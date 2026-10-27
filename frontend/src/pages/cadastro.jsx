@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import AuthLayout from '../components/AuthLayout';
 import { salvarAutenticacao } from '../utils/auth';
 import '../App.css';
 
@@ -10,6 +11,7 @@ export default function Cadastro() {
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [mensagem, setMensagem] = useState('');
+  const [sucesso, setSucesso] = useState(false);
   const navigate = useNavigate();
 
   let erroValidacao = '';
@@ -36,6 +38,7 @@ export default function Cadastro() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensagem('');
+    setSucesso(false);
 
     if (senha !== confirmarSenha) {
       setMensagem('As senhas não coincidem!');
@@ -66,6 +69,7 @@ export default function Cadastro() {
         email: data.email,
       });
 
+      setSucesso(true);
       setMensagem('Cadastro realizado com sucesso!');
       setTimeout(() => {
         navigate('/landing');
@@ -75,71 +79,92 @@ export default function Cadastro() {
     }
   };
 
+  // FastAPI pode devolver um objeto de validação em vez de string
+  const textoMensagem = typeof mensagem === 'string' ? mensagem : mensagem?.msg;
+
   return (
-    <div>
-      <section id="center">
-        <form style={{ width: '75%' }} onSubmit={handleSubmit}>
-          <label>
-            <h4 style={{ marginBottom: '8px' }}>Nome:</h4>
+    <AuthLayout>
+      <div className="auth-card">
+        <Link to="/" aria-label="Voltar ao início">
+          <img src={logo} className="auth-logo" alt="AdaptEd" style={{ width: 104, height: 104 }} />
+        </Link>
+        <h1>Criar conta</h1>
+        <p className="subtitle">Comece a tornar suas aulas mais inclusivas.</p>
+
+        <form onSubmit={handleSubmit}>
+          <label className="field">
+            <span className="field-label">Nome</span>
             <input
+              className="input"
               type="text"
               name="name"
+              autoComplete="name"
+              placeholder="Como devemos te chamar?"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               required
             />
           </label>
-          <label>
-            <h4 style={{ marginBottom: '8px' }}>E-mail:</h4>
+          <label className="field">
+            <span className="field-label">E-mail</span>
             <input
+              className="input"
               type="email"
               name="email"
+              autoComplete="email"
+              placeholder="seuemail@escola.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </label>
-          <label>
-            <h4 style={{ marginBottom: '8px' }}>Senha:</h4>
+          <label className="field">
+            <span className="field-label">Senha</span>
             <input
+              className={`input${senha && erroValidacao ? ' has-error' : ''}`}
               type="password"
               name="password"
+              autoComplete="new-password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
             />
+            {erroValidacao ? (
+              <span className={senha ? 'field-error' : 'field-hint'}>{erroValidacao}</span>
+            ) : (
+              <span className="field-hint">Senha válida ✓</span>
+            )}
           </label>
-          {erroValidacao && (
-            <p style={{ color: 'red', marginTop: '-5px', marginBottom: '10px', fontWeight: 'bold' }}>
-              {erroValidacao}
-            </p>
-          )}
-          <label>
-            <h4 style={{ marginBottom: '8px' }}>Confirmar Senha:</h4>
+          <label className="field">
+            <span className="field-label">Confirmar senha</span>
             <input
+              className="input"
               type="password"
               name="confirmPassword"
+              autoComplete="new-password"
               value={confirmarSenha}
               onChange={(e) => setConfirmarSenha(e.target.value)}
               required
             />
           </label>
-          <h4 style={{ marginBottom: '8px' }}>
-            Já possui uma conta? <Link to="/login">Entrar</Link>
-          </h4>
-          <input
+
+          {textoMensagem && (
+            <p className={`alert ${sucesso ? 'alert-success' : 'alert-error'}`}>{textoMensagem}</p>
+          )}
+
+          <button
             type="submit"
-            value="Criar conta"
-            className="dark-gray-button"
+            className="btn btn-primary btn-lg btn-block"
             disabled={botaoDesabilitado}
-            style={{
-              opacity: botaoDesabilitado ? 0.6 : 1,
-              cursor: botaoDesabilitado ? 'not-allowed' : 'pointer',
-            }}
-          />
+          >
+            Criar conta
+          </button>
         </form>
-      </section>
-      {mensagem && <p style={{ fontWeight: 'bold' }}>{mensagem}</p>}
-    </div>
+
+        <p className="auth-switch">
+          Já possui uma conta? <Link to="/login">Entrar</Link>
+        </p>
+      </div>
+    </AuthLayout>
   );
 }
