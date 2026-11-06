@@ -4,6 +4,7 @@ import Header from '../components/Header';
 import { headersAuth } from '../utils/auth';
 import Icone from '../components/Icone';
 import Carregando from '../components/Carregando';
+import AdaptarAtividadeModal from '../components/AdaptarAtividadeModal';
 import '../App.css';
 
 export default function Aluno() {
@@ -19,6 +20,8 @@ export default function Aluno() {
   const [mensagem, setMensagem] = useState('');
   const [engajamento, setEngajamento] = useState(0);
   const [salvandoEngajamento, setSalvandoEngajamento] = useState(false);
+  const [modalAtividadeAberto, setModalAtividadeAberto] = useState(false);
+  const [atividadesAdaptadas, setAtividadesAdaptadas] = useState([]);
 
   // Turma vem do state (via navigate) OU da URL (futuro)
   const turmaId = location.state?.turmaId || null;
@@ -77,6 +80,24 @@ export default function Aluno() {
         if (responseObs.ok) {
           const dadosObs = await responseObs.json();
           setObservacoes(Array.isArray(dadosObs) ? dadosObs : []);
+        }
+
+        // Busca atividades adaptadas salvas
+        const chaveStorage = `adapted_atividades_${id}_${turmaSelecionada}`;
+        const salvasLocal = JSON.parse(localStorage.getItem(chaveStorage) || '[]');
+        try {
+          const responseAtiv = await fetch(
+            `http://127.0.0.1:8000/atividades/aluno/${id}/turma/${turmaSelecionada}`,
+            { headers: headersAuth() }
+          );
+          if (responseAtiv.ok) {
+            const dadosAtiv = await responseAtiv.json();
+            setAtividadesAdaptadas(Array.isArray(dadosAtiv) ? dadosAtiv : salvasLocal);
+          } else {
+            setAtividadesAdaptadas(salvasLocal);
+          }
+        } catch {
+          setAtividadesAdaptadas(salvasLocal);
         }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
@@ -205,8 +226,64 @@ export default function Aluno() {
     }
   };
 
-  const handleSugerirAtividades = () => {
-    alert('Funcionalidade será implementada na próxima sprint!');
+  const handleAtividadeAdaptada = (novaAtividade) => {
+    setAtividadesAdaptadas((anteriores) => {
+      const atualizadas = [novaAtividade, ...anteriores];
+      if (turmaSelecionada) {
+        const chaveStorage = `adapted_atividades_${id}_${turmaSelecionada}`;
+        const paraSalvar = atualizadas.map(({ download_url: _downloadUrl, ...resto }) => resto);
+        localStorage.setItem(chaveStorage, JSON.stringify(paraSalvar));
+      }
+      return atualizadas;
+    });
+    setMensagem('Atividade adaptada e salva com sucesso!');
+    setTimeout(() => setMensagem(''), 3000);
+  };
+
+  const handleBaixarAtividadeSalva = async (atividade) => {
+    if (atividade.download_url) {
+      const link = document.createElement('a');
+      link.href = atividade.download_url;
+      link.download = atividade.nome_arquivo || 'atividade_adaptada.txt';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+
+    if (atividade.conteudo_texto) {
+      const blob = new Blob([atividade.conteudo_texto], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = atividade.nome_arquivo || 'atividade_adaptada.txt';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/atividades/${atividade.id}/download`,
+        { headers: headersAuth() }
+      );
+      if (!response.ok) {
+        throw new Error('Ocorreu um erro interno. Tente novamente mais tarde');
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = atividade.nome_arquivo || 'atividade_adaptada';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch {
+      setMensagem('Ocorreu um erro interno. Tente novamente mais tarde');
+    }
   };
 
   const handleVoltar = () => {
@@ -408,17 +485,58 @@ export default function Aluno() {
               </div>
             </section>
 
-            {/* Botão sugerir atividades */}
+            {/* Botão adicionar atividade */}
             <section className="card sugestao-card">
               <h3 className="card-title">
                 <Icone nome="sparkle" style={{ color: '#fff' }} />
                 Atividades adaptadas
               </h3>
-              <p>Sugira atividades baseadas nas deficiências e observações do aluno.</p>
-              <button type="button" onClick={handleSugerirAtividades} className="btn btn-block">
-                <Icone nome="sparkle" />
-                Sugerir atividades
+              <p>Adapte atividades de acordo com as deficiências e anotações do aluno.</p>
+              <button
+                type="button"
+                onClick={() => setModalAtividadeAberto(true)}
+                className="btn btn-block"
+              >
+                <Icone nome="add" />
+                Adicionar atividade
               </button>
+            </section>
+
+            {/* Lista de atividades adaptadas salvas para uso futuro */}
+            <section className="card" style={{ marginTop: 20 }}>
+              <div className="section-header" style={{ marginBottom: 12 }}>
+                <h3 className="card-title" style={{ marginBottom: 0 }}>
+                  <Icone nome="description" />
+                  Atividades salvas
+                  <span className="count-badge">{atividadesAdaptadas.length}</span>
+                </h3>
+              </div>
+
+              {atividadesAdaptadas.length === 0 ? (
+                <p className="muted" style={{ fontSize: 14 }}>
+                  Nenhuma atividade adaptada salva ainda para este aluno.
+                </p>
+              ) : (
+                <div className="atividades-salvas-list">
+                  {atividadesAdaptadas.map((ativ) => (
+                    <div key={ativ.id} className="atividade-salva-item">
+                      <div className="atividade-salva-info">
+                        <h4>{ativ.nome_arquivo || ativ.nome_original}</h4>
+                        {ativ.data_criacao && <p className="obs-meta">{ativ.data_criacao}</p>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleBaixarAtividadeSalva(ativ)}
+                        className="btn btn-tonal btn-sm"
+                        title="Baixar atividade adaptada"
+                      >
+                        <Icone nome="download" />
+                        Baixar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
 
@@ -534,6 +652,17 @@ export default function Aluno() {
           </section>
         </div>
       </main>
+
+      {modalAtividadeAberto && (
+        <AdaptarAtividadeModal
+          aluno={aluno}
+          turmaId={turmaSelecionada}
+          deficiencias={deficienciasLista}
+          observacoes={observacoes}
+          onClose={() => setModalAtividadeAberto(false)}
+          onAtividadeAdaptada={handleAtividadeAdaptada}
+        />
+      )}
     </>
   );
 }
