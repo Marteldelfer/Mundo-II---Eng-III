@@ -5,6 +5,7 @@ import Login from './pages/login';
 import HomeLogada from './components/HomeLogada';
 import MinhasTurmas from './pages/minhas_turmas';
 import Turma from './pages/turma';
+import AtividadesTurma from './pages/atividades_turma';
 import Aluno from './pages/aluno';
 import RotaProtegida from './components/RotaProtegida';
 import { estaAutenticado } from './utils/auth';
@@ -67,6 +68,14 @@ function App() {
           element={
             <RotaProtegida>
               <Turma />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/turma/:id/atividades"
+          element={
+            <RotaProtegida>
+              <AtividadesTurma />
             </RotaProtegida>
           }
         />

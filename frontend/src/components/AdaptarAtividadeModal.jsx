@@ -7,6 +7,17 @@ const EXTENSOES_PERMITIDAS = ['txt', 'pdf', 'pptx', 'docx'];
 const TAMANHO_MAXIMO_BYTES = 10 * 1024 * 1024; // 10MB
 const MENSAGEM_ERRO_INTERNO = 'Ocorreu um erro interno. Tente novamente mais tarde';
 
+function extrairListaDeficiencias(valor) {
+  if (Array.isArray(valor)) return valor.filter(Boolean);
+  if (typeof valor === 'string' && valor.trim()) {
+    return valor
+      .split(',')
+      .map((d) => d.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 function gerarSugestoesContextualizadas(deficiencias = [], observacoes = []) {
   const sugestoes = [];
   const defsLower = deficiencias.map((d) => d.toLowerCase());
@@ -45,6 +56,11 @@ function gerarSugestoesContextualizadas(deficiencias = [], observacoes = []) {
       'Reduzir a quantidade de informações simultâneas por questão e oferecer apoio conceitual passo a passo.'
     );
   }
+  if (defsLower.some((d) => d.includes('física') || d.includes('motora'))) {
+    sugestoes.push(
+      'Adaptar questões discursivas extensas para formatos objetivos ou respostas tópicas que exijam menor esforço motor.'
+    );
+  }
 
   if (observacoes.length > 0) {
     const ultimaObs = observacoes[0]?.texto;
@@ -67,17 +83,65 @@ function gerarSugestoesContextualizadas(deficiencias = [], observacoes = []) {
   return sugestoes;
 }
 
+function gerarSugestoesTurmaContextualizadas(alunosTurma = []) {
+  const todasDeficiencias = [];
+  const sugestoesPorAluno = [];
+
+  alunosTurma.forEach((alunoItem) => {
+    const defs = extrairListaDeficiencias(alunoItem.deficiencias);
+    defs.forEach((d) => {
+      if (!todasDeficiencias.includes(d)) todasDeficiencias.push(d);
+    });
+
+    const obsAluno = Array.isArray(alunoItem.observacoes_lista)
+      ? alunoItem.observacoes_lista
+      : [];
+    if (obsAluno.length > 0 && obsAluno[0]?.texto) {
+      const textoObs = obsAluno[0].texto;
+      const resumo = textoObs.length > 70 ? `${textoObs.slice(0, 70)}...` : textoObs;
+      sugestoesPorAluno.push(
+        `Considerar anotação sobre ${alunoItem.nome} ("${resumo}") na estruturação dos exercícios.`
+      );
+    } else if (typeof alunoItem.observacoes === 'string' && alunoItem.observacoes.trim()) {
+      const textoObs = alunoItem.observacoes.trim();
+      const resumo = textoObs.length > 70 ? `${textoObs.slice(0, 70)}...` : textoObs;
+      sugestoesPorAluno.push(
+        `Considerar anotação sobre ${alunoItem.nome} ("${resumo}") na estruturação dos exercícios.`
+      );
+    }
+  });
+
+  const sugestoesBase = gerarSugestoesContextualizadas(todasDeficiencias, []);
+  return [...sugestoesBase, ...sugestoesPorAluno];
+}
+
 /**
- * Pop-up de upload, análise e adaptação de atividade com IA para um aluno.
+ * Pop-up de upload, análise e adaptação de atividade com IA.
+ * Suporta tanto adaptação individual para um aluno (US011)
+ * quanto adaptação coletiva para uma turma inteira (US012).
  */
 export default function AdaptarAtividadeModal({
-  aluno,
-  turmaId,
+  aluno = null,
+  turma = null,
+  turmaId = null,
   deficiencias = [],
   observacoes = [],
+  alunosTurma = [],
   onClose,
   onAtividadeAdaptada,
 }) {
+  const modoTurma = Boolean(turma && !aluno);
+  const idTurmaFinal = turma?.id || turmaId;
+  const nomeAlvo = modoTurma ? turma?.nome || 'a turma' : aluno?.nome || 'o aluno';
+
+  const deficienciasColetivas = modoTurma
+    ? Array.from(
+        new Set(
+          alunosTurma.flatMap((a) => extrairListaDeficiencias(a.deficiencias))
+        )
+      )
+    : deficiencias;
+
   const [arquivo, setArquivo] = useState(null);
   const [erroArquivo, setErroArquivo] = useState('');
   const [erroInterno, setErroInterno] = useState('');
@@ -94,6 +158,13 @@ export default function AdaptarAtividadeModal({
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
+  const obterSugestoesFallback = () => {
+    if (modoTurma) {
+      return gerarSugestoesTurmaContextualizadas(alunosTurma);
+    }
+    return gerarSugestoesContextualizadas(deficiencias, observacoes);
+  };
+
   const analisarArquivo = async (arquivoSelecionado) => {
     setAnalisando(true);
     setErroInterno('');
@@ -104,20 +175,25 @@ export default function AdaptarAtividadeModal({
     try {
       const formData = new FormData();
       formData.append('arquivo', arquivoSelecionado);
-      formData.append('aluno_id', String(aluno.id));
-      if (turmaId) {
-        formData.append('turma_id', String(turmaId));
+      if (aluno?.id) {
+        formData.append('aluno_id', String(aluno.id));
+      }
+      if (idTurmaFinal) {
+        formData.append('turma_id', String(idTurmaFinal));
       }
 
-      const response = await fetch('http://127.0.0.1:8000/atividades/analisar', {
+      const urlAnalise = modoTurma
+        ? `http://127.0.0.1:8000/atividades/turma/${idTurmaFinal}/analisar`
+        : 'http://127.0.0.1:8000/atividades/analisar';
+
+      const response = await fetch(urlAnalise, {
         method: 'POST',
         headers: headersAuthUpload(),
         body: formData,
       });
 
       if (response.status === 404) {
-        // Fallback local caso o endpoint ainda não esteja publicado no backend
-        const sugestoesFallback = gerarSugestoesContextualizadas(deficiencias, observacoes);
+        const sugestoesFallback = obterSugestoesFallback();
         setMelhoriasSugeridas(sugestoesFallback);
         setMelhoriasAprovadas(sugestoesFallback);
         return;
@@ -139,9 +215,7 @@ export default function AdaptarAtividadeModal({
         .filter(Boolean);
 
       const resultadoFinal =
-        normalizadas.length > 0
-          ? normalizadas
-          : gerarSugestoesContextualizadas(deficiencias, observacoes);
+        normalizadas.length > 0 ? normalizadas : obterSugestoesFallback();
 
       setMelhoriasSugeridas(resultadoFinal);
       setMelhoriasAprovadas(resultadoFinal);
@@ -211,14 +285,20 @@ export default function AdaptarAtividadeModal({
     try {
       const formData = new FormData();
       formData.append('arquivo', arquivo);
-      formData.append('aluno_id', String(aluno.id));
-      if (turmaId) {
-        formData.append('turma_id', String(turmaId));
+      if (aluno?.id) {
+        formData.append('aluno_id', String(aluno.id));
+      }
+      if (idTurmaFinal) {
+        formData.append('turma_id', String(idTurmaFinal));
       }
       formData.append('melhorias', JSON.stringify(melhoriasAprovadas));
       formData.append('notas_usuario', notasUsuario.trim());
 
-      const response = await fetch('http://127.0.0.1:8000/atividades/adaptar', {
+      const urlAdaptar = modoTurma
+        ? `http://127.0.0.1:8000/atividades/turma/${idTurmaFinal}/adaptar`
+        : 'http://127.0.0.1:8000/atividades/adaptar';
+
+      const response = await fetch(urlAdaptar, {
         method: 'POST',
         headers: headersAuthUpload(),
         body: formData,
@@ -226,23 +306,32 @@ export default function AdaptarAtividadeModal({
 
       const nomeBase = arquivo.name.replace(/\.[^/.]+$/, '');
       const extensaoOriginal = arquivo.name.split('.').pop()?.toLowerCase() || 'txt';
-      const nomeAdaptadoPadrao = `${nomeBase}_adaptada_${aluno.nome
+      const sufixoAlvo = nomeAlvo
         .trim()
         .toLowerCase()
-        .replace(/\s+/g, '_')}.${extensaoOriginal}`;
+        .replace(/\s+/g, '_');
+      const nomeAdaptadoPadrao = `${nomeBase}_adaptada_${sufixoAlvo}.${extensaoOriginal}`;
 
       if (response.status === 404) {
-        // Geração local do arquivo adaptado para download e salvamento caso rota ainda não exista no backend
         let textoOriginal = '';
         if (extensaoOriginal === 'txt') {
           textoOriginal = await arquivo.text().catch(() => '');
         }
 
+        const cabecalhoAlvo = modoTurma
+          ? `ATIVIDADE ADAPTADA PARA A TURMA — ${nomeAlvo.toUpperCase()}`
+          : `ATIVIDADE ADAPTADA — ${nomeAlvo.toUpperCase()}`;
+
         const linhasConteudo = [
-          `ATIVIDADE ADAPTADA — ${aluno.nome.toUpperCase()}`,
+          cabecalhoAlvo,
           `Arquivo original: ${arquivo.name}`,
           `Data da adaptação: ${new Date().toLocaleString('pt-BR')}`,
-          deficiencias.length > 0 ? `Deficiências consideradas: ${deficiencias.join(', ')}` : null,
+          deficienciasColetivas.length > 0
+            ? `Deficiências consideradas: ${deficienciasColetivas.join(', ')}`
+            : null,
+          modoTurma && alunosTurma.length > 0
+            ? `Alunos contemplados (${alunosTurma.length}): ${alunosTurma.map((a) => a.nome).join(', ')}`
+            : null,
           '',
           '=== MELHORIAS APLICADAS PELA IA ===',
           ...(melhoriasAprovadas.length > 0
@@ -369,7 +458,11 @@ export default function AdaptarAtividadeModal({
   return (
     <Modal
       titulo="Adaptar atividade"
-      descricao={`Envie uma atividade para receber sugestões de adaptação personalizadas para ${aluno.nome}.`}
+      descricao={
+        modoTurma
+          ? `Envie uma atividade ou material para receber sugestões de adaptação baseadas nas deficiências e anotações dos alunos de ${nomeAlvo}.`
+          : `Envie uma atividade para receber sugestões de adaptação personalizadas para ${nomeAlvo}.`
+      }
       onClose={onClose}
       wide
     >
@@ -406,7 +499,9 @@ export default function AdaptarAtividadeModal({
             <div>
               <strong>Analisando atividade com a IA...</strong>
               <p className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                Verificando melhorias de acordo com as deficiências e anotações do aluno.
+                {modoTurma
+                  ? 'Verificando melhorias de acordo com as deficiências e anotações de cada aluno da turma.'
+                  : 'Verificando melhorias de acordo com as deficiências e anotações do aluno.'}
               </p>
             </div>
           </div>
@@ -425,9 +520,23 @@ export default function AdaptarAtividadeModal({
               </span>
             </div>
             <p className="field-hint" style={{ marginBottom: 10 }}>
-              Baseadas nas deficiências
-              {deficiencias.length > 0 ? ` (${deficiencias.join(', ')})` : ''} e nas anotações do
-              aluno. Marque as melhorias que deseja aprovar:
+              {modoTurma ? (
+                <>
+                  Baseadas nas deficiências
+                  {deficienciasColetivas.length > 0
+                    ? ` (${deficienciasColetivas.join(', ')})`
+                    : ''}{' '}
+                  e nas anotações de cada aluno da turma. Marque as melhorias que deseja aprovar:
+                </>
+              ) : (
+                <>
+                  Baseadas nas deficiências
+                  {deficienciasColetivas.length > 0
+                    ? ` (${deficienciasColetivas.join(', ')})`
+                    : ''}{' '}
+                  e nas anotações do aluno. Marque as melhorias que deseja aprovar:
+                </>
+              )}
             </p>
 
             <ul className="sugestoes-ia-list">

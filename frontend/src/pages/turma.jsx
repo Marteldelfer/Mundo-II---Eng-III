@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
+import TurmaNavbar from '../components/TurmaNavbar';
 import { headersAuth, headersAuthUpload } from '../utils/auth';
 import Icone from '../components/Icone';
 import Modal from '../components/Modal';
@@ -439,6 +440,8 @@ export default function Turma() {
           <Icone nome="arrowBack" />
           Minhas turmas
         </button>
+
+        <TurmaNavbar turmaId={id} abaAtiva="alunos" />
 
         <div className="page-header">
           <div>
