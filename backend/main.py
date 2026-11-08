@@ -14,13 +14,15 @@ from src.utils.database import engine, Base
 from src.modelos.user import *          # noqa: F401,F403
 from src.modelos.turma import *         # noqa: F401,F403
 from src.modelos.aluno import *         # noqa: F401,F403
-from src.modelos.aluno_turma import *   # noqa: F401,F403  👈 FALTAVA ISSO
+from src.modelos.aluno_turma import *   # noqa: F401,F403
 from src.modelos.observacao import *    # noqa: F401,F403
+from src.modelos.atividade import *     # noqa: F401,F403 👈 NOVO MODELO ADICIONADO
 
 from src.controllers.user_controller import router as user_router
 from src.controllers.turma_controller import router as turma_router
 from src.controllers.aluno_controller import router as aluno_router
 from src.controllers.observacao_controller import router as observacao_router
+from src.controllers.atividade_controller import router as atividade_router # 👈 NOVO CONTROLLER
 
 # Agora sim, cria as tabelas (todos os modelos já foram importados)
 Base.metadata.create_all(bind=engine)
@@ -39,3 +41,4 @@ app.include_router(user_router)
 app.include_router(turma_router)
 app.include_router(aluno_router)
 app.include_router(observacao_router)
+app.include_router(atividade_router)

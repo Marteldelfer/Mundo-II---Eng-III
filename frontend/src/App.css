@@ -254,10 +254,12 @@
 }
 .turma-card p {
   display: -webkit-box;
+  display: -webkit-box;
   overflow: hidden;
   color: var(--text);
   font-size: 14px;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 .turma-card .open-hint {
@@ -727,25 +729,31 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface-variant);
+  /* Adicionado para garantir que o conteúdo não vaze */
+  width: 100%; 
+  overflow: hidden; 
 }
+
 .atividade-salva-info {
-  min-width: 0;
+  /* A mágica acontece aqui: min-width: 0 permite que o flex-item encolha */
+  min-width: 0; 
+  flex: 1; 
 }
+
 .atividade-salva-info h4 {
   overflow: hidden;
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Garantindo que o título ocupe 100% do espaço disponível do pai */
+  max-width: 100%; 
+  margin: 0; 
 }
 
-@media (max-width: 640px) {
-  .aluno-item {
-    flex-wrap: wrap;
-  }
-  .aluno-item-actions {
-    width: 100%;
-    justify-content: flex-end;
-    border-top: 1px solid var(--border);
-    padding-top: 6px;
-  }
+/* Opcional: Melhorar a exibição do texto "Original:..." */
+.atividade-salva-info .obs-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
