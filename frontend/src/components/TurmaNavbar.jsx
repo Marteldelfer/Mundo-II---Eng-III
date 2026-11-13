@@ -1,10 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import Icone from './Icone';
 
-/**
- * Menu Navbar exibido no topo da página da turma para alternar
- * entre o painel da turma (Alunos) e a aba de Atividades.
- */
 export default function TurmaNavbar({ turmaId, abaAtiva = 'alunos' }) {
   const navigate = useNavigate();
 
@@ -30,6 +26,16 @@ export default function TurmaNavbar({ turmaId, abaAtiva = 'alunos' }) {
         >
           <Icone nome="description" />
           Atividades
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={abaAtiva === 'chat'}
+          className={`turma-navbar-tab${abaAtiva === 'chat' ? ' active' : ''}`}
+          onClick={() => navigate(`/turma/${turmaId}/chat`)}
+        >
+          <Icone nome="sparkle" />
+          Chat AdaptEd
         </button>
       </div>
     </nav>

@@ -23,6 +23,7 @@ from src.controllers.turma_controller import router as turma_router
 from src.controllers.aluno_controller import router as aluno_router
 from src.controllers.observacao_controller import router as observacao_router
 from src.controllers.atividade_controller import router as atividade_router # 👈 NOVO CONTROLLER
+from src.controllers.chat_controller import router as chat_router
 
 # Agora sim, cria as tabelas (todos os modelos já foram importados)
 Base.metadata.create_all(bind=engine)
@@ -42,3 +43,4 @@ app.include_router(turma_router)
 app.include_router(aluno_router)
 app.include_router(observacao_router)
 app.include_router(atividade_router)
+app.include_router(chat_router)

@@ -63,6 +63,21 @@ Mantenha o formato original o máximo possível, mas garanta que as adaptações
 """
 
 # ==========================================
+# INSTRUÇÕES PARA O CHAT
+# ==========================================
+INSTRUCOES_CHAT_TURMA = """
+Você é o AdaptEd AI, um assistente pedagógico especializado em educação inclusiva.
+Você está ajudando um professor com a turma: {contexto}.
+Use as informações de deficiências e observações fornecidas para dar dicas práticas, sugira adaptações de materiais, avaliações e dinâmicas de sala de aula. Seja direto, empático e prático.
+"""
+
+INSTRUCOES_CHAT_ALUNO = """
+Você é o AdaptEd AI, um assistente pedagógico especializado em educação inclusiva.
+Você está ajudando um professor com um aluno específico: {contexto}.
+Use as informações de deficiências e observações fornecidas para dar dicas personalizadas. Seja empático, prático e foque em estratégias que funcionem para este aluno.
+"""
+
+# ==========================================
 # MODELOS PYDANTIC
 # ==========================================
 class DadosTurmaIA(BaseModel):
@@ -298,3 +313,29 @@ def adaptar_atividade(
                 client.files.delete(arquivo_openai.id)
             except Exception:
                 pass
+
+# ==========================================
+# INSTRUÇÕES E FUNÇÃO PARA O CHAT
+# ==========================================
+
+def chat_adaptado(
+    mensagens: List[dict], # [{"role": "user", "content": "..."}]
+    contexto_texto: str,
+    tipo_contexto: str = "turma", # "turma" ou "aluno"
+) -> str:
+    client = _criar_cliente_openai()
+    
+    instrucao_base = INSTRUCOES_CHAT_TURMA if tipo_contexto == "turma" else INSTRUCOES_CHAT_ALUNO
+    instrucao_final = instrucao_base.format(contexto=contexto_texto)
+
+    try:
+        resposta = client.chat.completions.create(
+            model=os.getenv("OPENAI_MODEL", MODELO_PADRAO),
+            messages=[
+                {"role": "system", "content": instrucao_final},
+                *mensagens
+            ],
+        )
+        return resposta.choices[0].message.content
+    except Exception as e:
+        raise RuntimeError(f"Erro no chat: {str(e)}")

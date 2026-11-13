@@ -7,6 +7,7 @@ import MinhasTurmas from './pages/minhas_turmas';
 import Turma from './pages/turma';
 import AtividadesTurma from './pages/atividades_turma';
 import Aluno from './pages/aluno';
+import ChatTurma from './pages/chat_turma'; // 👈 NOVO IMPORT
 import RotaProtegida from './components/RotaProtegida';
 import { estaAutenticado } from './utils/auth';
 import './App.css';
@@ -79,6 +80,17 @@ function App() {
             </RotaProtegida>
           }
         />
+        
+        {/* 👈 NOVA ROTA DE CHAT DA TURMA */}
+        <Route
+          path="/turma/:id/chat"
+          element={
+            <RotaProtegida>
+              <ChatTurma />
+            </RotaProtegida>
+          }
+        />
+
         <Route
           path="/aluno/:id"
           element={
